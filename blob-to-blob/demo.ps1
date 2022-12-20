@@ -2,7 +2,7 @@ $resourceGroupName = "rg-storage-demos"
 $storageSourceName = "storagesource0000000010"
 $storageTargetName = "storagetarget0000000010"
 $location = "northeurope"
-$sku = "Premium_LRS"
+$sku = "Standard_LRS"
 $kind = "StorageV2"
 
 $resourceGroup = New-AzResourceGroup -Name $resourceGroupName -Location $location
@@ -27,11 +27,21 @@ $storageTarget = New-AzStorageAccount `
 
 $storageTarget
 
-$storageSource = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageSource
-$storageTarget = Get-AzStorageAccount -ResourceGroupName $resouresourceGroupNamerceGroup -Name $storageTargetName
+$storageSource = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageSourceName
+$storageTarget = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageTargetName
 
-$sourceContext = $storageSource.Context
-$targetContext = $storageTarget.Context
+$contextSource = $storageSource.Context
+$contextTarget = $storageTarget.Context
 
-$sourceContext
-$targetContext
+$contextSource
+$contextTarget
+
+$storageContainerSource = New-AzStorageContainer -Name $containerName -Context $contextSource
+$storageContainerTarget = New-AzStorageContainer -Name $containerName -Context $contextTarget
+
+$containerName = "files"
+Set-Content -Path "file.txt" -Value "hello world"
+Set-AzStorageBlobContent -Context $contextSource -Container $containerName -Blob "file.txt" -File "file.txt"
+
+# Clean up
+Remove-AzResourceGroup -Name $resourceGroupName -Force
