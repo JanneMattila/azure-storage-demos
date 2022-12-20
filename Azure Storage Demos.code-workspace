@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic"
+	},
+	"extensions": {
+		"recommendations": [
+			"humao.rest-client",
+			"vscjava.vscode-java-pack"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "java",
+				"name": "Java - Launch App",
+				"request": "launch",
+				"mainClass": "com.jannemattila.App",
+				"projectName": "demo",
+				"args": "forwarder EventHub2.properties"
+			}
+		]
+	}
+}
