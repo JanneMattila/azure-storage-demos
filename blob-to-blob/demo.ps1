@@ -41,8 +41,8 @@ $contextTarget = $storageTarget.Context
 $contextSource
 $contextTarget
 
-$sasSource = New-AzStorageAccountSASToken -Context $contextSource -Service Blob -ResourceType Container -Permission "racwdlup" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
-$sasTarget = New-AzStorageAccountSASToken -Context $contextTarget -Service Blob -ResourceType Container -Permission "racwdlup" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
+$sasSource = New-AzStorageAccountSASToken -Context $contextSource -Service Blob -ResourceType Service, Container, Object -Permission "rwdlacupiytfx" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
+$sasTarget = New-AzStorageAccountSASToken -Context $contextTarget -Service Blob -ResourceType Service, Container, Object -Permission "rwdlacupiytfx" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
 
 # Create if not existing
 $storageContainerSource = New-AzStorageContainer -Name $containerName -Context $contextSource
@@ -74,6 +74,12 @@ $uriTarget = $storageContainerTarget.CloudBlobContainer.Uri.AbsoluteUri
 azcopy sync `
 ($uriSource + "/" + $sasSource) `
 ($uriTarget + "/" + $sasTarget) `
+    --recursive
+
+azcopy copy `
+($uriSource + "/" + $sasSource) `
+($uriTarget + "/" + $sasTarget) `
+    --overwrite ifSourceNewer `
     --recursive
 
 # Clean up
