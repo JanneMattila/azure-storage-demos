@@ -27,6 +27,11 @@ $storageTarget = New-AzStorageAccount `
 
 $storageTarget
 
+$keySource = Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageSourceName
+$keyTarget = Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageTargetName
+$key1Source = $keySource[0].Value
+$key1Target = $keyTarget[0].Value
+
 $storageSource = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageSourceName
 $storageTarget = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageTargetName
 
@@ -36,12 +41,40 @@ $contextTarget = $storageTarget.Context
 $contextSource
 $contextTarget
 
+$sasSource = New-AzStorageAccountSASToken -Context $contextSource -Service Blob -ResourceType Container -Permission "racwdlup" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
+$sasTarget = New-AzStorageAccountSASToken -Context $contextTarget -Service Blob -ResourceType Container -Permission "racwdlup" -ExpiryTime ([DateTime]::UtcNow).AddYears(1)
+
+# Create if not existing
 $storageContainerSource = New-AzStorageContainer -Name $containerName -Context $contextSource
 $storageContainerTarget = New-AzStorageContainer -Name $containerName -Context $contextTarget
+
+# Or get existing
+$storageContainerSource = Get-AzStorageContainer -Name $containerName -Context $contextSource
+$storageContainerTarget = Get-AzStorageContainer -Name $containerName -Context $contextTarget
 
 $containerName = "files"
 Set-Content -Path "file.txt" -Value "hello world"
 Set-AzStorageBlobContent -Context $contextSource -Container $containerName -Blob "file.txt" -File "file.txt"
+
+###########################
+#  ____
+# / ___| _   _ _ __   ___
+# \___ \| | | | '_ \ / __|
+#  ___) | |_| | | | | (__
+# |____/ \__, |_| |_|\___|
+#        |___/
+###########################
+
+azcopy --help
+azcopy sync --help
+
+$uriSource = $storageContainerSource.CloudBlobContainer.Uri.AbsoluteUri
+$uriTarget = $storageContainerTarget.CloudBlobContainer.Uri.AbsoluteUri
+
+azcopy sync `
+($uriSource + "/" + $sasSource) `
+($uriTarget + "/" + $sasTarget) `
+    --recursive
 
 # Clean up
 Remove-AzResourceGroup -Name $resourceGroupName -Force
