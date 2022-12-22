@@ -1,11 +1,12 @@
 $resourceGroupName = "rg-storage-demos"
-$storageSourceName = "storagesource0000000010"
-$storageTargetName = "storagetarget0000000010"
-$location = "northeurope"
+$storageSourceName = "storagesource0000000011"
+$storageTargetName = "storagetarget0000000011"
+$location = "westeurope"
 $sku = "Standard_LRS"
 $kind = "StorageV2"
+$containerName = "files"
 
-$resourceGroup = New-AzResourceGroup -Name $resourceGroupName -Location $location
+$resourceGroup = New-AzResourceGroup -Name $resourceGroupName -Location $location -Force
 
 $storageSource = New-AzStorageAccount `
     -ResourceGroupName $resourceGroupName `
@@ -52,7 +53,6 @@ $storageContainerTarget = New-AzStorageContainer -Name $containerName -Context $
 $storageContainerSource = Get-AzStorageContainer -Name $containerName -Context $contextSource
 $storageContainerTarget = Get-AzStorageContainer -Name $containerName -Context $contextTarget
 
-$containerName = "files"
 Set-Content -Path "file.txt" -Value "hello world"
 Set-AzStorageBlobContent -Context $contextSource -Container $containerName -Blob "file.txt" -File "file.txt"
 
@@ -67,9 +67,16 @@ Set-AzStorageBlobContent -Context $contextSource -Container $containerName -Blob
 
 azcopy --help
 azcopy sync --help
+azcopy copy --help
 
 $uriSource = $storageContainerSource.CloudBlobContainer.Uri.AbsoluteUri
 $uriTarget = $storageContainerTarget.CloudBlobContainer.Uri.AbsoluteUri
+
+azcopy sync `
+($uriSource + $sasSource) `
+($uriTarget + $sasTarget) `
+    --recursive `
+    --dry-run
 
 azcopy sync `
 ($uriSource + "/" + $sasSource) `
