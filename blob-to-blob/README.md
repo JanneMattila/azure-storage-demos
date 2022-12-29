@@ -46,10 +46,17 @@ azcopy copy `
 
 ### Notes
 
-Storage Insights for 1 hour when copying tiny few byte files (all are under < 20 B) files using `azcopy copy`:
+#### Tiny files copy
 
-![Small file copy statistics](https://user-images.githubusercontent.com/2357647/209936847-fdbc6303-90b6-47df-ad95-099828753f12.png)
+Copying tiny few byte files (all are under < 20 B) files using `azcopy copy`.
 
+Source Storage account Insights for 1 hour period:
+
+![Small file copy statistics source account](https://user-images.githubusercontent.com/2357647/209936847-fdbc6303-90b6-47df-ad95-099828753f12.png)
+
+Target Storage account Insights for 1 hour period:
+
+![Small file copy statistics target account](https://user-images.githubusercontent.com/2357647/209938096-8ed414f0-7946-49cd-8d3f-a5b3de136ad4.png)
 
 ### Links
 
