@@ -102,8 +102,67 @@ ssh $vm_username@$vm_public_ip_address
 # Or using sshpass
 sshpass -p $vm_password ssh $vm_username@$vm_public_ip_address
 
+# If you want to use screen for running commands
+screen
+
+########################################
+#     _          ____
+#    / \    ____/ ___|___  _ __  _   _
+#   / _ \  |_  / |   / _ \| '_ \| | | |
+#  / ___ \  / /| |__| (_) | |_) | |_| |
+# /_/   \_\/___|\____\___/| .__/ \__, |
+#                         |_|    |___/
+########################################
+
 # Install AzCopy
-wget "https://aka.ms/downloadazcopy-v10-linux" -o azcopy.tar
+wget "https://aka.ms/downloadazcopy-v10-linux"
+mkdir -p azcopy
+tar -xf downloadazcopy-v10-linux --strip-components=1 --directory azcopy
+cd azcopy
+./azcopy --help
+./azcopy sync --help
+./azcopy copy --help
+
+transfer_rate_mbs=0
+storage_source="<storage_path>/<storage_sas>"
+storage_target="<storage_path>/<storage_sas>"
+export AZCOPY_JOB_PLAN_LOCATION=/mnt/logs
+
+# Allow using of temp drive for these logs
+sudo mkdir -p /mnt/logs
+sudo chmod 777 /mnt/logs
+
+# Additional parameters to check:
+# --include-after '2020-08-19'
+echo "Started: $(date)" >> log.txt 
+./azcopy copy \
+  $storage_source \
+  $storage_target \
+  --cap-mbps $transfer_rate_mbs \
+  --log-level WARNING \
+  --output-level default \
+  --overwrite ifSourceNewer \
+  --recursive 
+echo "Ended: $(date)" >> log.txt 
+
+cat log.txt
+
+##################################################
+#     __     _           ____
+#    / /    / \    ____ / ___| ___   _ __   _   _
+#   / /    / _ \  |_  /| |    / _ \ | '_ \ | | | |
+#  / /    / ___ \  / / | |___| (_) || |_) || |_| |
+# /_/    /_/   \_\/___| \____|\___/ | .__/  \__, |
+#                                   |_|     |___/
+##################################################
+
+##################
+#   __  _
+#  / _|(_)  ___
+# | |_ | | / _ \
+# |  _|| || (_) |
+# |_|  |_| \___/
+##################
 
 truncate -s 10m demo1.bin
 time curl -T demo1.bin -X POST "http://$ingress_ip/api/upload"
@@ -126,6 +185,14 @@ ls perf-test/*.0
 
 # Remove test files
 rm perf-test/*.0
+
+#########################
+#     __   __  _
+#    / /  / _|(_)  ___
+#   / /  | |_ | | / _ \
+#  / /   |  _|| || (_) |
+# /_/    |_|  |_| \___/
+#########################
 
 # Exit VM
 exit
