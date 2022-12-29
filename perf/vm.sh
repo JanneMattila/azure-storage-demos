@@ -9,6 +9,8 @@ location="westeurope"
 vnet_name="vnet-vm"
 subnet_vm_name="snet-vm"
 
+storage_name="sftp00000000010"
+
 vm_name="vm"
 vm_username="azureuser"
 
@@ -31,6 +33,65 @@ az account set --subscription $subscription_name -o table
 
 # Create resource group
 az group create -l $location -n $resource_group_name -o table
+
+# Storage options:
+# ----------------
+# $sku=Premium_LRS
+# $kind=BlockBlobStorage
+# Or
+$sku=Standard_LRS
+$kind=StorageV2
+
+storage_id=$(az storage account create \
+  --name $storage_name \
+  --resource-group $resource_group_name \
+  --location $location \
+  --sku $sku \
+  --kind $kind \
+  --enable-hierarchical-namespace true \
+  --enable-sftp true \
+  --query id -o tsv)
+
+az storage container create \
+  --account-name $storage_name \
+  --name sftp \
+  --auth-mode login
+
+az storage account local-user create --account-name contosoaccount -g contoso-resource-group -n contosouser --home-directory contosocontainer --permission-scope permissions=rw service=blob resource-name=contosocontainer 
+--ssh-authorized-key key="ssh-rsa ssh-rsa a2V5..." --has-ssh-key true --has-ssh-password true
+
+storage_sftp_username=$storage_name.$vm_username@$storage_name.blob.core.windows.net
+
+# https://learn.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed#generate-keys-with-ssh-keygen
+ssh-keygen \
+    -m PEM \
+    -t rsa \
+    -b 4096 \
+    -C $storage_sftp_username \
+    -f ~/.ssh/$vm_username \
+    -N $vm_password
+
+ll ~/.ssh
+chmod 600 ~/.ssh/$vm_username.pub
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/$vm_username
+
+az storage account local-user create \
+  --resource-group $resource_group_name \
+  --account-name $storage_name \
+  --name $vm_username \
+  --home-directory sftp \
+  --ssh-authorized-key key="$(cat ~/.ssh/$vm_username.pub)" \
+  --has-ssh-key true \
+  --has-ssh-password true \
+  --permission-scope permissions=rwdl service=blob resource-name=sftp
+
+storage_sftp_password=$(az storage account local-user regenerate-password \
+  --resource-group $resource_group_name \
+  --account-name $storage_name \
+  --name $vm_username \
+  --query sshPassword -o tsv)
+echo $storage_sftp_password
 
 az network nsg create \
   --resource-group $resource_group_name \
@@ -96,6 +157,15 @@ echo $vm_public_ip_address
 echo vm_username=$vm_username
 echo vm_password=$vm_password
 echo vm_public_ip_address=$vm_public_ip_address
+
+# Echo important variables
+echo -e "Environment vars->" \
+     \\nvm_username=\"$vm_username\" \
+     \\nvm_password=\"$vm_password\" \
+     \\nvm_public_ip_address=\"$vm_public_ip_address\" \
+     \\nstorage_sftp_username=\"$storage_sftp_username\" \
+     \\nstorage_sftp_password=\"$storage_sftp_password\" \
+     \\n"<-Environment vars"
 
 ssh $vm_username@$vm_public_ip_address
 
@@ -164,9 +234,6 @@ cat log.txt
 # |_|  |_| \___/
 ##################
 
-truncate -s 10m demo1.bin
-time curl -T demo1.bin -X POST "http://$ingress_ip/api/upload"
-
 # Install fio
 sudo apt-get install fio
 cd /home
@@ -193,6 +260,31 @@ rm perf-test/*.0
 #  / /   |  _|| || (_) |
 # /_/    |_|  |_| \___/
 #########################
+
+#########################
+#        __  _
+#  ___  / _|| |_  _ __
+# / __|| |_ | __|| '_ \
+# \__ \|  _|| |_ | |_) |
+# |___/|_|   \__|| .__/
+#                |_|
+#########################
+
+truncate -s 10m demo1.bin
+cat <<EOF > batch_commands.batch
+put demo1.bin
+EOF
+
+time sftp -B 262000 -R 32 -b batch_commands.batch -i ~/.ssh/$vm_username $storage_sftp_username
+
+#############################
+#     __      __  _
+#    / /___  / _|| |_  _ __
+#   / // __|| |_ | __|| '_ \
+#  / / \__ \|  _|| |_ | |_) |
+# /_/  |___/|_|   \__|| .__/
+#                     |_|
+#############################
 
 # Exit VM
 exit
