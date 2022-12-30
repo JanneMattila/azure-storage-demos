@@ -9,7 +9,7 @@ location="westeurope"
 vnet_name="vnet-vm"
 subnet_vm_name="snet-vm"
 
-storage_name="sftp00000000010"
+storage_name="sftp00000000011"
 
 vm_name="vm"
 vm_username="azureuser"
@@ -296,20 +296,20 @@ rm -rf /mnt/sftp/*
 find /mnt/sftp/ -type f -delete
 
 generation_time=$(date +%s)
-generation_count=100
+generation_count=1000
 for ((i=1; i<=$generation_count; i++))
 do
   # Generate large files with sizes ~50-200 MB
-  # file_size=$(($RANDOM % 150 + 50 ))
-  # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+  file_size=$(($RANDOM % 151 + 50 ))
+  truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate Office document type of payloads with sizes ~1-50 MB
   # file_size=$(($RANDOM % 50 + 1 ))
   # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
-  # Generate tiny log type payloads with sizes ~1-5 kB
-  file_size=$(($RANDOM % 30 + 30 ))
-  truncate -s ${file_size}k /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+  # Generate tiny log type payloads with sizes ~30-60 kB
+  # file_size=$(($RANDOM % 31 + 30 ))
+  # truncate -s ${file_size}k /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate tiny log type payloads with sizes ~1-5 kB
   # file_size=$(($RANDOM % 5 + 1 ))
@@ -329,14 +329,20 @@ put -r /mnt/sftp/*
 EOF
 
 cat batch_commands.batch
-    
+
 # With 32 requests and buffer size of 262000
+date
 time sftp -B 262000 -R 32 -b batch_commands.batch $storage_sftp_username
 
 # With compression
 time sftp -B 262000 -R 32 -C -b batch_commands.batch $storage_sftp_username
 
 sftp -B 262000 -R 32 $storage_sftp_username
+
+# Example estimation calculator
+bandwidth=30 # MB/s
+data_size=135*1024 # MB
+echo "$((data_size / bandwidth / 60)) minutes"
 
 #############################
 #     __      __  _
