@@ -58,6 +58,23 @@ Target Storage account Insights for 1 hour period:
 
 ![Small file copy statistics target account](https://user-images.githubusercontent.com/2357647/209938096-8ed414f0-7946-49cd-8d3f-a5b3de136ad4.png)
 
+Example output:
+
+```
+Job be6e41e4-dd16-3744-4a35-5571c34349d8 summary
+Elapsed Time (Minutes): 186.262
+Number of File Transfers: 4130000
+Number of Folder Property Transfers: 0
+Total Number of Transfers: 4130000
+Number of Transfers Completed: 4068820
+Number of Transfers Failed: 0
+Number of Transfers Skipped: 87
+TotalBytesTransferred: 22182726
+Final Job Status: Cancelled
+```
+
+=> `20k files per minute`
+
 ### Links
 
 [Optimize file synchronization](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-optimize#optimize-file-synchronization)

@@ -34,65 +34,6 @@ az account set --subscription $subscription_name -o table
 # Create resource group
 az group create -l $location -n $resource_group_name -o table
 
-# Storage options:
-# ----------------
-# $sku=Premium_LRS
-# $kind=BlockBlobStorage
-# Or
-$sku=Standard_LRS
-$kind=StorageV2
-
-storage_id=$(az storage account create \
-  --name $storage_name \
-  --resource-group $resource_group_name \
-  --location $location \
-  --sku $sku \
-  --kind $kind \
-  --enable-hierarchical-namespace true \
-  --enable-sftp true \
-  --query id -o tsv)
-
-az storage container create \
-  --account-name $storage_name \
-  --name sftp \
-  --auth-mode login
-
-az storage account local-user create --account-name contosoaccount -g contoso-resource-group -n contosouser --home-directory contosocontainer --permission-scope permissions=rw service=blob resource-name=contosocontainer 
---ssh-authorized-key key="ssh-rsa ssh-rsa a2V5..." --has-ssh-key true --has-ssh-password true
-
-storage_sftp_username=$storage_name.$vm_username@$storage_name.blob.core.windows.net
-
-# https://learn.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed#generate-keys-with-ssh-keygen
-ssh-keygen \
-    -m PEM \
-    -t rsa \
-    -b 4096 \
-    -C $storage_sftp_username \
-    -f ~/.ssh/$vm_username \
-    -N $vm_password
-
-ll ~/.ssh
-chmod 600 ~/.ssh/$vm_username.pub
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/$vm_username
-
-az storage account local-user create \
-  --resource-group $resource_group_name \
-  --account-name $storage_name \
-  --name $vm_username \
-  --home-directory sftp \
-  --ssh-authorized-key key="$(cat ~/.ssh/$vm_username.pub)" \
-  --has-ssh-key true \
-  --has-ssh-password true \
-  --permission-scope permissions=rwdl service=blob resource-name=sftp
-
-storage_sftp_password=$(az storage account local-user regenerate-password \
-  --resource-group $resource_group_name \
-  --account-name $storage_name \
-  --name $vm_username \
-  --query sshPassword -o tsv)
-echo $storage_sftp_password
-
 az network nsg create \
   --resource-group $resource_group_name \
   --name $nsg_name
@@ -261,6 +202,9 @@ rm perf-test/*.0
 # /_/    |_|  |_| \___/
 #########################
 
+# Exit VM
+exit
+
 #########################
 #        __  _
 #  ___  / _|| |_  _ __
@@ -270,12 +214,109 @@ rm perf-test/*.0
 #                |_|
 #########################
 
-truncate -s 10m demo1.bin
+# Storage options:
+# ----------------
+# sku="Premium_LRS"
+# kind="BlockBlobStorage"
+# Or
+sku="Standard_LRS"
+kind="StorageV2"
+
+storage_id=$(az storage account create \
+  --name $storage_name \
+  --resource-group $resource_group_name \
+  --location $location \
+  --sku $sku \
+  --kind $kind \
+  --enable-hierarchical-namespace true \
+  --enable-sftp true \
+  --query id -o tsv)
+
+az storage container create \
+  --account-name $storage_name \
+  --name sftp \
+  --auth-mode login
+
+storage_sftp_username=$storage_name.$vm_username@$storage_name.blob.core.windows.net
+
+# Go to VM
+sshpass -p $vm_password ssh $vm_username@$vm_public_ip_address
+
+# https://learn.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed#generate-keys-with-ssh-keygen
+ssh-keygen \
+    -m PEM \
+    -t rsa \
+    -b 4096 \
+    -C $storage_sftp_username \
+    -f ~/.ssh/$vm_username \
+    -N $vm_password
+
+cat ~/.ssh/$vm_username.pub
+
+# Exit VM
+exit
+
+# Copy public key to local machine
+sshpass -p $vm_password scp $vm_username@$vm_public_ip_address:.ssh/$vm_username.pub .
+ll $vm_username.pub
+
+az storage account local-user create \
+  --resource-group $resource_group_name \
+  --account-name $storage_name \
+  --name $vm_username \
+  --home-directory sftp \
+  --ssh-authorized-key key="$(cat $vm_username.pub)" \
+  --has-ssh-key true \
+  --has-ssh-password true \
+  --permission-scope permissions=rwdl service=blob resource-name=sftp
+
+storage_sftp_password=$(az storage account local-user regenerate-password \
+  --resource-group $resource_group_name \
+  --account-name $storage_name \
+  --name $vm_username \
+  --query sshPassword -o tsv)
+echo $storage_sftp_password
+
+# Go to VM
+sshpass -p $vm_password ssh $vm_username@$vm_public_ip_address
+
+# Host verification check prompt
+ssh $storage_sftp_username
+
+ll ~/.ssh
+chmod 600 ~/.ssh/$vm_username.pub
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/$vm_username
+
+# Allow using of temp drive for these files
+sudo mkdir -p /mnt/sftp
+sudo chmod 777 /mnt/sftp
+
+rm -rf /mnt/sftp/*
+
+generation_time=$(date +%s)
+for i in {1..100}
+do
+  file_size=$(($RANDOM % 50 + 1 ))
+  truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${file_size}.bin
+done
+
+ll /mnt/sftp
+du -h /mnt/sftp
+df -h /mnt/sftp
+
+output_path=$(uuidgen)
 cat <<EOF > batch_commands.batch
-put demo1.bin
+mkdir $output_path
+cd $output_path
+put -r /mnt/sftp/*
 EOF
 
-time sftp -B 262000 -R 32 -b batch_commands.batch -i ~/.ssh/$vm_username $storage_sftp_username
+cat batch_commands.batch
+
+time sftp -B 262000 -R 32 -v -b batch_commands.batch $storage_sftp_username
+
+sftp -B 262000 -R 32 -v $storage_sftp_username
 
 #############################
 #     __      __  _
