@@ -293,18 +293,27 @@ sudo mkdir -p /mnt/sftp
 sudo chmod 777 /mnt/sftp
 
 rm -rf /mnt/sftp/*
+find /mnt/sftp/ -type f -delete
 
 generation_time=$(date +%s)
 generation_count=100
 for ((i=1; i<=$generation_count; i++))
 do
+  # Generate large files with sizes ~50-200 MB
+  # file_size=$(($RANDOM % 150 + 50 ))
+  # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+
   # Generate Office document type of payloads with sizes ~1-50 MB
   # file_size=$(($RANDOM % 50 + 1 ))
   # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate tiny log type payloads with sizes ~1-5 kB
-  file_size=$(($RANDOM % 5 + 1 ))
+  file_size=$(($RANDOM % 30 + 30 ))
   truncate -s ${file_size}k /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+
+  # Generate tiny log type payloads with sizes ~1-5 kB
+  # file_size=$(($RANDOM % 5 + 1 ))
+  # truncate -s ${file_size}k /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 done
 
 ll /mnt/sftp
@@ -320,7 +329,7 @@ put -r /mnt/sftp/*
 EOF
 
 cat batch_commands.batch
-
+    
 # With 32 requests and buffer size of 262000
 time sftp -B 262000 -R 32 -b batch_commands.batch $storage_sftp_username
 
