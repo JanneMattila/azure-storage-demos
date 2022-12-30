@@ -268,7 +268,7 @@ az storage account local-user create \
   --ssh-authorized-key key="$(cat $vm_username.pub)" \
   --has-ssh-key true \
   --has-ssh-password true \
-  --permission-scope permissions=rwdl service=blob resource-name=sftp
+  --permission-scope permissions=rwdlc service=blob resource-name=sftp
 
 storage_sftp_password=$(az storage account local-user regenerate-password \
   --resource-group $resource_group_name \
@@ -295,15 +295,22 @@ sudo chmod 777 /mnt/sftp
 rm -rf /mnt/sftp/*
 
 generation_time=$(date +%s)
-for i in {1..100}
+generation_count=100
+for ((i=1; i<=$generation_count; i++))
 do
-  file_size=$(($RANDOM % 50 + 1 ))
-  truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${file_size}.bin
+  # Generate Office document type of payloads with sizes ~1-50 MB
+  # file_size=$(($RANDOM % 50 + 1 ))
+  # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+
+  # Generate tiny log type payloads with sizes ~1-5 kB
+  file_size=$(($RANDOM % 5 + 1 ))
+  truncate -s ${file_size}k /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 done
 
 ll /mnt/sftp
-du -h /mnt/sftp
-df -h /mnt/sftp
+ls -lhsR /mnt/sftp
+du -h --apparent-size /mnt/sftp
+find /mnt/sftp -type f | wc -l
 
 output_path=$(uuidgen)
 cat <<EOF > batch_commands.batch
@@ -314,9 +321,13 @@ EOF
 
 cat batch_commands.batch
 
-time sftp -B 262000 -R 32 -v -b batch_commands.batch $storage_sftp_username
+# With 32 requests and buffer size of 262000
+time sftp -B 262000 -R 32 -b batch_commands.batch $storage_sftp_username
 
-sftp -B 262000 -R 32 -v $storage_sftp_username
+# With compression
+time sftp -B 262000 -R 32 -C -b batch_commands.batch $storage_sftp_username
+
+sftp -B 262000 -R 32 $storage_sftp_username
 
 #############################
 #     __      __  _
