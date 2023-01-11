@@ -124,6 +124,7 @@ screen
 # /_/   \_\/___|\____\___/| .__/ \__, |
 #                         |_|    |___/
 ########################################
+#region AzCopy
 
 # Install AzCopy
 wget "https://aka.ms/downloadazcopy-v10-linux"
@@ -166,6 +167,7 @@ cat log.txt
 # /_/    /_/   \_\/___| \____|\___/ | .__/  \__, |
 #                                   |_|     |___/
 ##################################################
+#endregion
 
 ##################
 #   __  _
@@ -174,6 +176,7 @@ cat log.txt
 # |  _|| || (_) |
 # |_|  |_| \___/
 ##################
+#region fio
 
 # Install fio
 sudo apt-get install fio
@@ -204,6 +207,8 @@ rm perf-test/*.0
 
 # Exit VM
 exit
+
+#endregion
 
 #########################
 #        __  _
@@ -239,8 +244,19 @@ az storage container create \
 
 storage_sftp_username=$storage_name.$vm_username@$storage_name.blob.core.windows.net
 
+# Copy vars to VM
+echo -e "Environment vars->" \
+     \\nvm_username=\"$vm_username\" \
+     \\nvm_password=\"$vm_password\" \
+     \\nvm_public_ip_address=\"$vm_public_ip_address\" \
+     \\nstorage_sftp_username=\"$storage_sftp_username\" \
+     \\nstorage_sftp_password=\"$storage_sftp_password\" \
+     \\n"<-Environment vars"
+
 # Go to VM
 sshpass -p $vm_password ssh $vm_username@$vm_public_ip_address
+
+# Set variables
 
 # https://learn.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed#generate-keys-with-ssh-keygen
 ssh-keygen \
@@ -284,8 +300,9 @@ sshpass -p $vm_password ssh $vm_username@$vm_public_ip_address
 ssh $storage_sftp_username
 
 ll ~/.ssh
-chmod 600 ~/.ssh/$vm_username.pub
 eval "$(ssh-agent -s)"
+
+echo $vm_password
 ssh-add ~/.ssh/$vm_username
 
 # Allow using of temp drive for these files
@@ -296,12 +313,16 @@ rm -rf /mnt/sftp/*
 find /mnt/sftp/ -type f -delete
 
 generation_time=$(date +%s)
-generation_count=1000
+generation_count=1
 for ((i=1; i<=$generation_count; i++))
 do
-  # Generate large files with sizes ~50-200 MB
-  file_size=$(($RANDOM % 151 + 50 ))
+  # Generate fix sizes
+  file_size=5000
   truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+
+  # Generate large files with sizes ~50-200 MB
+  # file_size=$(($RANDOM % 151 + 50 ))
+  # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate Office document type of payloads with sizes ~1-50 MB
   # file_size=$(($RANDOM % 50 + 1 ))
