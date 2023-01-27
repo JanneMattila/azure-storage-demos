@@ -328,7 +328,7 @@ do
   # file_size=$(($RANDOM % 50 + 1 ))
   # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
-  # Generate files with sizes ~30-60 kB
+  # Generate files with sizes ~29-31 MB
   file_size=$(($RANDOM % 3 + 29 ))
   truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
