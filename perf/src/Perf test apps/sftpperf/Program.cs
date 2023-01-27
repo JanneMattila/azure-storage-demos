@@ -25,7 +25,7 @@ var targetFolder = configuration.GetValue<string>("targetFolder", Guid.NewGuid()
 ConcurrentQueue<string> queue = new();
 int uploading = 0;
 
-Console.WriteLine("Enumerating files...");
+Console.WriteLine($"Enumerating files from folder {sourceFolder}...");
 var files = Directory.GetFiles(sourceFolder);
 foreach (var path in files)
 {
@@ -33,6 +33,8 @@ foreach (var path in files)
 }
 
 Console.WriteLine($"Starting {threads} threads...");
+Console.WriteLine($"FTP user: {user}");
+Console.WriteLine($"FTP host: {host}");
 
 stopwatch.Start();
 var threadList = new List<Thread>();
