@@ -18,7 +18,7 @@ Numbers if using `sftp -B 262000 -R 32 -C -b`:
 
 ## File upload from VM to SFTP using custom tool
 
-Numbers if using custom tool in [Perf test apps](./perf/src/Perf%20test%20apps).
+Numbers if using custom tool in [Perf test apps](./src/Perf%20test%20apps).
 
 Example output log:
 
