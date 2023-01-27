@@ -32,9 +32,10 @@ foreach (var path in files)
     queue.Enqueue(path);
 }
 
-Console.WriteLine($"Starting {threads} threads...");
 Console.WriteLine($"FTP user: {sftpUsername}");
 Console.WriteLine($"FTP host: {sftpHost}");
+
+Console.WriteLine($"Starting {threads} threads to upload to {targetFolder}...");
 
 stopwatch.Start();
 var threadList = new List<Thread>();
@@ -98,3 +99,5 @@ foreach (var t in threadList)
 {
     t.Join();
 }
+
+Console.WriteLine($"It took {Math.Round(stopwatch.Elapsed.TotalSeconds, 0)} seconds to upload {files.Length} to folder {targetFolder}");
