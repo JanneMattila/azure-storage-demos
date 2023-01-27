@@ -16,9 +16,9 @@ var configuration = builder.Build();
 var stopwatch = new Stopwatch();
 
 var threads = configuration.GetValue<int>("threads", 10);
-var host = configuration.GetValue<string>("host") ?? throw new ArgumentNullException("host");
-var user = configuration.GetValue<string>("user") ?? throw new ArgumentNullException("user");
-var password = configuration.GetValue<string>("password") ?? throw new ArgumentNullException("password");
+var sftpHost = configuration.GetValue<string>("sftphost") ?? throw new ArgumentNullException("sftphost");
+var sftpUsername = configuration.GetValue<string>("sftpuser") ?? throw new ArgumentNullException("sftpuser");
+var sftpPassword = configuration.GetValue<string>("sftppassword") ?? throw new ArgumentNullException("sftppassword");
 var sourceFolder = configuration.GetValue<string>("sourceFolder") ?? throw new ArgumentNullException("sourceFolder");
 var targetFolder = configuration.GetValue<string>("targetFolder", Guid.NewGuid().ToString("D"));
 
@@ -33,8 +33,8 @@ foreach (var path in files)
 }
 
 Console.WriteLine($"Starting {threads} threads...");
-Console.WriteLine($"FTP user: {user}");
-Console.WriteLine($"FTP host: {host}");
+Console.WriteLine($"FTP user: {sftpUsername}");
+Console.WriteLine($"FTP host: {sftpHost}");
 
 stopwatch.Start();
 var threadList = new List<Thread>();
@@ -52,7 +52,7 @@ for (int i = 0; i < threads; i++)
             {
                 relativePath = "";
             }
-            using var client = new SftpClient(host, user, password);
+            using var client = new SftpClient(sftpHost, sftpUsername, sftpPassword);
             client.Connect();
             var targetFullPath = Path.Combine(targetFolder, relativePath);
             var subDirectories = targetFullPath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
