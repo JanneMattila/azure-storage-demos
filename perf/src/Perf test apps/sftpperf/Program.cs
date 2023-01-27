@@ -100,4 +100,4 @@ foreach (var t in threadList)
     t.Join();
 }
 
-Console.WriteLine($"It took {Math.Round(stopwatch.Elapsed.TotalSeconds, 0)} seconds to upload {files.Length} to folder {targetFolder}");
+Console.WriteLine($"It took {Math.Round(stopwatch.Elapsed.TotalSeconds, 0)} seconds to upload {files.Length} files to folder {targetFolder}");

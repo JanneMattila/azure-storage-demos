@@ -146,7 +146,7 @@ sudo chmod 777 /mnt/logs
 
 # Additional parameters to check:
 # --include-after '2020-08-19'
-echo "Started: $(date)" >> log.txt 
+echo "Started: $(date)" >> log.txt
 ./azcopy copy \
   $storage_source \
   $storage_target \
@@ -154,8 +154,8 @@ echo "Started: $(date)" >> log.txt
   --log-level WARNING \
   --output-level default \
   --overwrite ifSourceNewer \
-  --recursive 
-echo "Ended: $(date)" >> log.txt 
+  --recursive
+echo "Ended: $(date)" >> log.txt
 
 cat log.txt
 
@@ -313,12 +313,12 @@ rm -rf /mnt/sftp/*
 find /mnt/sftp/ -type f -delete
 
 generation_time=$(date +%s)
-generation_count=1
+generation_count=320
 for ((i=1; i<=$generation_count; i++))
 do
   # Generate fix sizes
-  file_size=5000
-  truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+  # file_size=5000
+  # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate large files with sizes ~50-200 MB
   # file_size=$(($RANDOM % 151 + 50 ))
@@ -327,6 +327,10 @@ do
   # Generate Office document type of payloads with sizes ~1-50 MB
   # file_size=$(($RANDOM % 50 + 1 ))
   # truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
+
+  # Generate files with sizes ~30-60 kB
+  file_size=$(($RANDOM % 3 + 29 ))
+  truncate -s ${file_size}m /mnt/sftp/file_${generation_time}_${i}_${file_size}.bin
 
   # Generate tiny log type payloads with sizes ~30-60 kB
   # file_size=$(($RANDOM % 31 + 30 ))
