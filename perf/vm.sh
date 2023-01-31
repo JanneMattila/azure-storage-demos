@@ -249,6 +249,7 @@ echo -e "Environment vars->" \
      \\nvm_username=\"$vm_username\" \
      \\nvm_password=\"$vm_password\" \
      \\nvm_public_ip_address=\"$vm_public_ip_address\" \
+     \\nstorage_name=\"$storage_name\" \
      \\nstorage_sftp_username=\"$storage_sftp_username\" \
      \\nstorage_sftp_password=\"$storage_sftp_password\" \
      \\n"<-Environment vars"
@@ -363,6 +364,23 @@ time sftp -B 262000 -R 32 -b batch_commands.batch $storage_sftp_username
 time sftp -B 262000 -R 32 -C -b batch_commands.batch $storage_sftp_username
 
 sftp -B 262000 -R 32 $storage_sftp_username
+
+# Custom tool
+wget https://github.com/JanneMattila/azure-storage-demos/releases/download/sftpperf-v1/sftpperf
+chmod +x sftpperf
+
+cat <<EOF > appsettings.json
+{
+  "sourceFolder": "/mnt/sftp",
+  "threads": 10,
+  "sftpuser": "$storage_name.azureuser",
+  "sftppassword": "$storage_sftp_password",
+  "sftphost": "$storage_name.blob.core.windows.net"
+}
+EOF
+cat appsettings.json
+
+./sftpperf
 
 # Example estimation calculator
 bandwidth=30 # MB/s
