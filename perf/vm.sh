@@ -8,6 +8,7 @@ location="westeurope"
 
 vnet_name="vnet-vm"
 subnet_vm_name="snet-vm"
+subnet_pe_name="snet-pe"
 
 storage_name="sftp00000000011"
 
@@ -77,6 +78,11 @@ subnet_vm_id=$(az network vnet subnet create -g $resource_group_name --vnet-name
   --network-security-group $nsg_name \
   --query id -o tsv)
 echo $subnet_vm_id
+
+subnet_pe_id=$(az network vnet subnet create -g $resource_group_name --vnet-name $vnet_name \
+  --name $subnet_pe_name --address-prefixes 10.5.0.0/24 \
+  --query id -o tsv)
+echo $subnet_pe_id
 
 vm_json=$(az vm create \
   --resource-group $resource_group_name  \
