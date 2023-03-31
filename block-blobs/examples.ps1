@@ -54,7 +54,7 @@ Invoke-RestMethod `
     -Method "GET" `
     -Headers @{ 
     "x-ms-version" = "2022-11-02"
-    "Range"        = "bytes=0-268435456" 
+    "Range"        = "bytes=0-268435455" 
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
@@ -66,7 +66,7 @@ Invoke-RestMethod `
     -Method "GET" `
     -Headers @{ 
     "x-ms-version" = "2022-11-02"
-    "Range"        = "bytes=268435456-524288000" 
+    "Range"        = "bytes=268435456-" 
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
@@ -84,3 +84,9 @@ Invoke-RestMethod `
     -Token $secureAccessToken `
     -Uri "https://$storage.blob.core.windows.net/block-blobs/demo.bin" `
     -OutFile "part1-2.bin"
+
+Get-Content -Raw part1.bin > combined.bin
+Get-Content -Raw part2.bin >> combined.bin
+
+Get-FileHash -Algorithm SHA256 -Path combined.bin
+Get-FileHash -Algorithm SHA256 -Path demo-full.bin
