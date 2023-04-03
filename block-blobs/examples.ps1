@@ -11,6 +11,21 @@ Login-AzAccount -Tenant $tenantId
 $accessToken = Get-AzAccessToken -ResourceUrl "https://$storage.blob.core.windows.net/"
 $secureAccessToken = ConvertTo-SecureString -AsPlainText -String $accessToken.Token
 
+# To upload directly using "PUT" to "Archive" tier
+Invoke-RestMethod `
+    -Method "PUT" `
+    -Headers @{ 
+    "x-ms-version"     = "2022-11-02"
+    "x-ms-blob-type"   = "BlockBlob" 
+    "x-ms-access-tier" = "Archive" 
+} `
+    -Authentication Bearer `
+    -Token $secureAccessToken `
+    -Uri "https://$storage.blob.core.windows.net/block-blobs/part1.bin" `
+    -InFile "part1.bin"
+
+# ---
+
 Invoke-RestMethod `
     -Method "GET" `
     -Headers @{ "x-ms-version" = "2022-11-02" } `
@@ -101,3 +116,92 @@ Invoke-RestMethod `
     -Token $secureAccessToken `
     -Uri "https://$storage.blob.core.windows.net/block-blobs/demo.bin?comp=tier"
 
+# Copy "Archive" file to "Hot"
+# https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-overview
+# https://learn.microsoft.com/en-us/rest/api/storageservices/copy-blob
+$copyResponse = Invoke-WebRequest `
+    -Method "PUT" `
+    -Headers @{ 
+    "x-ms-version"            = "2022-11-02"
+    "x-ms-access-tier"        = "Hot"
+    "x-ms-rehydrate-priority" = "High"
+    "x-ms-copy-source"        = "https://$storage.blob.core.windows.net/block-blobs/demo.bin"
+} `
+    -Authentication Bearer `
+    -Token $secureAccessToken `
+    -Uri "https://$storage.blob.core.windows.net/block-blobs/demo-hot.bin"
+
+$copyResponse
+$copyResponse.Headers
+$copyResponse.Headers["x-ms-copy-status"]
+
+# Check copy status
+$statusResponse2 = Invoke-WebRequest `
+    -Method "HEAD" `
+    -Headers @{ 
+    "x-ms-version" = "2022-11-02"
+} `
+    -Authentication Bearer `
+    -Token $secureAccessToken `
+    -Uri "https://$storage.blob.core.windows.net/block-blobs/demo-hot.bin"
+
+$statusResponse
+$statusResponse.Headers
+# https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob-properties?tabs=azure-ad#response-headers
+# Key                          Value
+# ---                          -----
+# x-ms-blob-type               {BlockBlob}
+# x-ms-copy-id                 {7a01027d-74b7-4cfd-8c12-9ccf78ccd209}
+# x-ms-copy-source             {https://<storage>.blob.core.windows.net/block-blobs/demo.bin}
+# x-ms-copy-status             {success}
+# x-ms-copy-status-description {pending}
+# x-ms-copy-progress           {524288000/524288000}
+# x-ms-copy-completion-time    {Mon, 03 Apr 2023 12:30:37 GMT}
+# x-ms-access-tier             {Archive}
+# x-ms-access-tier-change-time {Mon, 03 Apr 2023 12:30:37 GMT}
+# x-ms-archive-status          {rehydrate-pending-to-hot}
+# x-ms-rehydrate-priority      {High}
+# Date                         {Mon, 03 Apr 2023 13:21:16 GMT}
+# Content-Length               {524288000}
+# Content-Type                 {application/octet-stream}
+# Last-Modified                {Mon, 03 Apr 2023 12:30:37 GMT}
+# 
+$statusResponse.Headers["x-ms-copy-status"]
+$statusResponse.Headers["x-ms-copy-progress"]
+$statusResponse.Headers["x-ms-copy-status-description"]
+$statusResponse.Headers["x-ms-archive-status"]
+$statusResponse.Headers["x-ms-rehydrate-priority"]
+
+# Follow-up on the copy status
+$statusResponse2 = Invoke-WebRequest `
+    -Method "HEAD" `
+    -Headers @{ 
+    "x-ms-version" = "2022-11-02"
+} `
+    -Authentication Bearer `
+    -Token $secureAccessToken `
+    -Uri "https://$storage.blob.core.windows.net/block-blobs/demo-hot.bin"
+
+$statusResponse2.Headers
+
+# Key                          Value
+# ---                          -----
+# x-ms-blob-type               {BlockBlob}
+# x-ms-copy-id                 {7a01027d-74b7-4cfd-8c12-9ccf78ccd209}
+# x-ms-copy-source             {https://<storage>.blob.core.windows.net/block-blobs/demo.bin}
+# x-ms-copy-status             {success}
+# x-ms-copy-status-description {success}
+# x-ms-copy-progress           {524288000/524288000}
+# x-ms-copy-completion-time    {Mon, 03 Apr 2023 12:30:37 GMT}
+# x-ms-access-tier             {Hot}
+# x-ms-access-tier-change-time {Mon, 03 Apr 2023 12:30:37 GMT}
+# Date                         {Mon, 03 Apr 2023 13:24:08 GMT}
+# Content-Length               {524288000}
+# Content-Type                 {application/octet-stream}
+# Last-Modified                {Mon, 03 Apr 2023 12:30:37 GMT}
+
+$statusResponse2.Headers["x-ms-copy-status"]
+$statusResponse2.Headers["x-ms-copy-progress"]
+$statusResponse2.Headers["x-ms-copy-status-description"]
+$statusResponse2.Headers["x-ms-archive-status"]
+$statusResponse2.Headers["x-ms-rehydrate-priority"]
