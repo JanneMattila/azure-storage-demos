@@ -1,3 +1,7 @@
+# To generate demo file in bash:
+# truncate -s 500m demo.bin
+# head -c 500m </dev/urandom > demo2.bin
+
 $storage = "<your storage account name>"
 $tenantId = "<your tenant id>"
 
@@ -73,20 +77,13 @@ Invoke-RestMethod `
     -Uri "https://$storage.blob.core.windows.net/block-blobs/demo.bin" `
     -OutFile "part2.bin"
 
-# Take second half of first block:
-Invoke-RestMethod `
-    -Method "GET" `
-    -Headers @{ 
-    "x-ms-version" = "2022-11-02"
-    "Range"        = "bytes=134217728-268435456" 
-} `
-    -Authentication Bearer `
-    -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/demo.bin" `
-    -OutFile "part1-2.bin"
-
-Get-Content -Raw part1.bin > combined.bin
-Get-Content -Raw part2.bin >> combined.bin
+# For bash:
+cat part1.bin part2.bin > combined.bin
+# For cmd:
+cmd.exe /c copy part1.bin+part2.bin combined.bin
 
 Get-FileHash -Algorithm SHA256 -Path combined.bin
 Get-FileHash -Algorithm SHA256 -Path demo-full.bin
+
+Format-Hex -Path combined.bin -Count 50 -Offset 0
+Format-Hex -Path demo-full.bin -Count 50 -Offset 0
