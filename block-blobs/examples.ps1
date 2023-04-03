@@ -87,3 +87,17 @@ Get-FileHash -Algorithm SHA256 -Path demo-full.bin
 
 Format-Hex -Path combined.bin -Count 50 -Offset 0
 Format-Hex -Path demo-full.bin -Count 50 -Offset 0
+
+# Change pricing tier to "Archive"
+# https://learn.microsoft.com/en-us/rest/api/storageservices/set-blob-tier#request-headers
+Invoke-RestMethod `
+    -Method "PUT" `
+    -Headers @{ 
+    "x-ms-version"            = "2022-11-02"
+    "x-ms-access-tier"        = "Archive"
+    "x-ms-rehydrate-priority" = "High"
+} `
+    -Authentication Bearer `
+    -Token $secureAccessToken `
+    -Uri "https://$storage.blob.core.windows.net/block-blobs/demo.bin?comp=tier"
+
