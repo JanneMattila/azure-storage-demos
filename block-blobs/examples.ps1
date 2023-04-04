@@ -1,12 +1,14 @@
 # To generate demo file in bash:
 # truncate -s 500m demo.bin
-# head -c 500m </dev/urandom > demo2.bin
+# head -c 500m </dev/urandom > demo.bin
 
 $storage = "<your storage account name>"
 $tenantId = "<your tenant id>"
+$sourceContainer = "files"
+$targetContainer = "files2"
 
-$sourceFilename = "demo2.bin"
-$targetFilename = "demo2-hot.bin"
+$sourceFilename = "demo.bin"
+$targetFilename = "demo-hot.bin"
 
 Login-AzAccount
 Login-AzAccount -Tenant $tenantId
@@ -24,7 +26,7 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/part1.bin" `
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/part1.bin" `
     -InFile "part1.bin"
 
 # ---
@@ -34,7 +36,7 @@ Invoke-RestMethod `
     -Headers @{ "x-ms-version" = "2022-11-02" } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename?comp=blocklist&blocklisttype=all" 
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename?comp=blocklist&blocklisttype=all" 
 
 # Example output (formatted):
 # ---------------------------
@@ -68,7 +70,7 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename" `
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename" `
     -OutFile "demo-full.bin"
 
 # Take full first block:
@@ -80,7 +82,7 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename" `
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename" `
     -OutFile "part1.bin"
 
 # Take full second block:
@@ -92,13 +94,13 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename" `
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename" `
     -OutFile "part2.bin"
 
 # For bash:
-cat part1.bin part2.bin > combined.bin
+# cat part1.bin part2.bin > combined.bin
 # For cmd:
-cmd.exe /c copy part1.bin+part2.bin combined.bin
+# cmd.exe /c copy part1.bin+part2.bin combined.bin
 
 Get-FileHash -Algorithm SHA256 -Path combined.bin
 Get-FileHash -Algorithm SHA256 -Path demo-full.bin
@@ -117,7 +119,7 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename?comp=tier"
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename?comp=tier"
 
 # Copy "Archive" file to "Hot"
 # https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-overview
@@ -128,11 +130,11 @@ $copyResponse = Invoke-WebRequest `
     "x-ms-version"            = "2022-11-02"
     "x-ms-access-tier"        = "Hot"
     "x-ms-rehydrate-priority" = "High"
-    "x-ms-copy-source"        = "https://$storage.blob.core.windows.net/block-blobs/$sourceFilename"
+    "x-ms-copy-source"        = "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename"
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$targetFilename"
+    -Uri "https://$storage.blob.core.windows.net/$targetContainer/$targetFilename"
 
 $copyResponse
 $copyResponse.Headers
@@ -146,7 +148,7 @@ $statusResponse2 = Invoke-WebRequest `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$targetFilename"
+    -Uri "https://$storage.blob.core.windows.net/$targetContainer/$targetFilename"
 
 $statusResponse
 $statusResponse.Headers
@@ -155,7 +157,7 @@ $statusResponse.Headers
 # ---                          -----
 # x-ms-blob-type               {BlockBlob}
 # x-ms-copy-id                 {7a01027d-74b7-4cfd-8c12-9ccf78ccd209}
-# x-ms-copy-source             {https://<storage>.blob.core.windows.net/block-blobs/demo.bin}
+# x-ms-copy-source             {https://<storage>.blob.core.windows.net/$sourceContainer/demo.bin}
 # x-ms-copy-status             {success}
 # x-ms-copy-status-description {pending}
 # x-ms-copy-progress           {524288000/524288000}
@@ -184,7 +186,7 @@ $statusResponse2 = Invoke-WebRequest `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/block-blobs/$targetFilename"
+    -Uri "https://$storage.blob.core.windows.net/$targetContainer/$targetFilename"
 
 $statusResponse2.Headers
 
@@ -192,7 +194,7 @@ $statusResponse2.Headers
 # ---                          -----
 # x-ms-blob-type               {BlockBlob}
 # x-ms-copy-id                 {7a01027d-74b7-4cfd-8c12-9ccf78ccd209}
-# x-ms-copy-source             {https://<storage>.blob.core.windows.net/block-blobs/demo.bin}
+# x-ms-copy-source             {https://<storage>.blob.core.windows.net/$sourceContainer/demo.bin}
 # x-ms-copy-status             {success}
 # x-ms-copy-status-description {success}
 # x-ms-copy-progress           {524288000/524288000}
