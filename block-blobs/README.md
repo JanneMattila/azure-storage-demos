@@ -1,6 +1,6 @@
 # BlockBlobs
 
-Metrics view while uploading 1 TB [BlockBlob](https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs#about-block-blobs) 
+Metrics view while uploading 256MB x 4000 times to create one large [BlockBlob](https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs#about-block-blobs) 
 file and using [Put Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=azure-ad) API:
 
 ![blob metrics while uploading BlockBlob](https://user-images.githubusercontent.com/2357647/230024864-d251815d-737c-4874-8ff3-39652be0380d.png)
