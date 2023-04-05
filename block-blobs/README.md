@@ -13,6 +13,8 @@ Entire upload duration API calls:
 
 ![upload duration api calls](https://user-images.githubusercontent.com/2357647/230034278-616c7a15-067c-4f64-bafd-a11c43d6140b.png)
 
+Uploaded file in container:
+
 ![file in container](https://user-images.githubusercontent.com/2357647/230034841-bbca006a-d25b-4a05-8888-5cadb4b78831.png)
 
 See [Python upload code](https://github.com/JanneMattila/python-examples/tree/main/azure-storage) example for more details.
