@@ -13,6 +13,21 @@ Test parameters:
   - 4000 blocks will be generated using [Put Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=azure-ad) API
   - After uploading blocks, file is committed using [Put Block List](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block-list?tabs=azure-ad) API call
 
+Overview of the process:
+
+```mermaid
+sequenceDiagram
+    participant Upload app
+    participant Azure Blob
+    Note left of Upload app: Read file in 256 MB chunks
+    Upload app->>+Azure Blob: Put Block
+    Upload app->>+Azure Blob: Put Block
+    Upload app->>+Azure Blob: Put Block
+    Upload app->>+Azure Blob: <repeat for all blocks>
+    Note left of Upload app: Commit and finalize upload
+    Upload app->>+Azure Blob: Put Block List
+```
+
 Metrics view while uploading blocks using [Put Block](https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=azure-ad) API:
 
 ![blob metrics while uploading BlockBlob](https://user-images.githubusercontent.com/2357647/230024864-d251815d-737c-4874-8ff3-39652be0380d.png)
