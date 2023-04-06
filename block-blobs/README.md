@@ -7,6 +7,8 @@ Your mileage *will* vary.
 **Important**: [BlockBlocks](https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs#about-block-blobs)
 **supports Maximum block size (via Put Block) up to 4000 MiB** after Service version `Version 2019-12-12 and later` 
 but in this example `256 MiB` file is used as example block size. Choose whatever makes sense in your scenario.
+You can always download file and [specify the range header](https://learn.microsoft.com/en-us/rest/api/storageservices/specifying-the-range-header-for-blob-service-operations)
+to read it in different ranges.
 
 > 268'435'456 bytes = 256 MiB = 0,25 GiB => 4000 * 256 MiB = 1000 GiB
 
@@ -126,3 +128,38 @@ Here is example calculation for transferring 500 files with size `1000 GiB` to `
 - Permanent storage cost in `Archive`
   - `1000 GiB = 1073.74 GB` => `500 x 1073.74 GB = 536870 GB = 536.87 TB`
   - Using [Azure Storage Reserved Capacity with 3-year reservation](https://azure.microsoft.com/en-us/pricing/details/storage/blobs/) => 100 TB / month for `Archive` = $152 => `6 x $152 = $912`
+
+## AzCopy
+
+You can also use [AzCopy](https://github.com/Azure/azure-storage-azcopy) to transfer files.
+It does support many [configuration settings](https://learn.microsoft.com/en-us/azure/storage/common/storage-ref-azcopy-configuration-settings)
+to optimize the performance e.g., `AZCOPY_BUFFER_GB`, `AZCOPY_CONCURRENCY_VALUE`, `AZCOPY_CONCURRENT_FILES`, `AZCOPY_CONCURRENT_SCAN`.
+See also [Optimize the performance of AzCopy with Azure Storage](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-optimize) for more details.
+
+You can test performance with this command:
+
+```bash
+storage_target="https://<storage.blob.core.windows.net/benchmark?si=all&spr=https&sv=2021-12-02&sr=c&sig=<...>"
+
+azcopy benchmark \
+  $storage_target \
+  --file-count 1 \
+  --size-per-file 10G \
+  --block-size-mb 256 \
+  --blob-type BlockBlob
+```
+
+To upload files using defined block size you can use following command:
+
+```bash
+azcopy copy \
+  /mnt/files \
+  $storage_target \
+  --block-size-mb 256 \
+  --blob-type BlockBlob \
+  --recursive
+```
+
+It will similarly call `PutBlock` and `PutBlockList` APIs based on your parameters:
+
+![AzCopy copy command visible in metrics view](https://user-images.githubusercontent.com/2357647/230346067-bc299eb2-ac3e-47ef-86e7-1b5fcae6e4d9.png)
