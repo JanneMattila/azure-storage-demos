@@ -74,7 +74,9 @@ Cost of uploading `1000 GiB` to Azure Storage to `Hot` tier:
 | `PutBlockList` API call | 1     | Write Operations (`Hot`) | $0.054                  | $0.0000054 |
 | TOTAL                   | 4001  |                          |                         | $0.0216054 |
 
-Here is example pricing extract (with tiny extras due to my tests) after uploading `1000 GiB` file to `Hot` tier:
+On top of above API based cost there is price of storing `1000 GiB` in `Hot` tier: `$0.0196 per GB` (with pay-as-you-go and first 50 terabyte (TB) / month).
+
+Here is example pricing extract from one day (with tiny extras due to my tests) after uploading `1000 GiB` file to `Hot` tier:
 
 ![Pricing screenshot after uploading 1000 GiB file to Hot tier](https://user-images.githubusercontent.com/2357647/230303100-c88a2684-b9c7-4004-9843-0b99d3b14e08.png)
 
@@ -83,14 +85,16 @@ Here is same in table format:
 | UsageDate  | ServiceFamily | ServiceName | Meter                                    | CostUSD   |
 | ---------- | ------------- | ----------- | ---------------------------------------- | --------- |
 | 2023-04-05 | Networking    | Bandwidth   | Standard Data Transfer In                | $-        |
-| 2023-04-05 | Networking    | Bandwidth   | Standard Data Transfer Out               | $0,000000 |
-| 2023-04-05 | Storage       | Storage     | All Other Operations                     | $0,000012 |
-| 2023-04-05 | Storage       | Storage     | Batch Write Operations                   | $0,000004 |
-| 2023-04-05 | Storage       | Storage     | Hot LRS Data Stored                      | $0,190543 |
-| 2023-04-05 | Storage       | Storage     | Hot LRS Write Operations                 | $0,021609 |
-| 2023-04-05 | Storage       | Storage     | LRS List and Create Container Operations | $0,000027 |
-| 2023-04-05 | Storage       | Storage     | Read Operations                          | $0,000001 |
-| 2023-04-05 | Storage       | Storage     | Write Operations                         | $0,000000 |
+| 2023-04-05 | Networking    | Bandwidth   | Standard Data Transfer Out               | $0.000000 |
+| 2023-04-05 | Storage       | Storage     | All Other Operations                     | $0.000012 |
+| 2023-04-05 | Storage       | Storage     | Batch Write Operations                   | $0.000004 |
+| 2023-04-05 | Storage       | Storage     | Hot LRS Data Stored                      | $0.190543 |
+| 2023-04-05 | Storage       | Storage     | Hot LRS Write Operations                 | $0.021609 |
+| 2023-04-05 | Storage       | Storage     | LRS List and Create Container Operations | $0.000027 |
+| 2023-04-05 | Storage       | Storage     | Read Operations                          | $0.000001 |
+| 2023-04-05 | Storage       | Storage     | Write Operations                         | $0.000000 |
+
+API usage cost from calculation and cost analysis view shows $0.022.
 
 ## Using `Archive` tier
 
