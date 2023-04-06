@@ -1,6 +1,8 @@
 # To generate demo file in bash:
-# truncate -s 500m demo.bin
-# head -c 500m </dev/urandom > demo.bin
+# truncate -s 500MB demo.bin
+# Multipliers: MB 1000*1000, M 1024*1024
+# head -c 500M </dev/urandom > demo.bin
+# head -c 500MB </dev/urandom > demo.bin
 
 $storage = "<your storage account name>"
 $tenantId = "<your tenant id>"
@@ -36,7 +38,7 @@ Invoke-RestMethod `
     -Headers @{ "x-ms-version" = "2022-11-02" } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename?comp=blocklist&blocklisttype=all" 
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$($sourceFilename)?comp=blocklist&blocklisttype=all"
 
 # Example output (formatted):
 # ---------------------------
@@ -119,7 +121,7 @@ Invoke-RestMethod `
 } `
     -Authentication Bearer `
     -Token $secureAccessToken `
-    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$sourceFilename?comp=tier"
+    -Uri "https://$storage.blob.core.windows.net/$sourceContainer/$($sourceFilename)?comp=tier"
 
 # Copy "Archive" file to "Hot"
 # https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-overview
