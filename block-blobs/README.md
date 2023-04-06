@@ -66,7 +66,7 @@ Cost of uploading `1000 GiB` to Azure Storage to `Hot` tier:
 | ----------------------- | ----- | ------------------------ | ----------------------- | ---------- |
 | `PutBlock` API call     | 4000  | Write Operations (`Hot`) | $0.054                  | $0.0216    |
 | `PutBlockList` API call | 1     | Write Operations (`Hot`) | $0.054                  | $0.0000054 |
-| ======================= | 4001  | ======================== | ======================= | $0.0216054 |
+|                         | 4001  |                          |                         | $0.0216054 |
 
 Here is example pricing extract (with tiny extras due to my tests) after uploading `1000 GiB` file to `Hot` tier:
 
@@ -95,7 +95,7 @@ API call.
 | `PutBlock` API call     | 4000  | Write Operations (`Hot`)     | $0.054                  | $0.0216    |
 | `PutBlockList` API call | 1     | Write Operations (`Hot`)     | $0.054                  | $0.0000054 |
 | `SetBlobTier` API call  | 1     | Write Operations (`Archive`) | $0.12                   | $0.000012  |
-| ======================= | 4002  | ========================     | ======================= | $0.0216174 |
+|                         | 4002  |                              |                         | $0.0216174 |
 
 You can also upload file directly to `Archive` tier:
 
@@ -103,4 +103,4 @@ You can also upload file directly to `Archive` tier:
 | ----------------------- | ----- | ---------------------------- | ----------------------- | --------- |
 | `PutBlock` API call     | 4000  | Write Operations (`Hot`)     | $0.054                  | $0.0216   |
 | `PutBlockList` API call | 1     | Write Operations (`Archive`) | $0.12                   | $0.000012 |
-| ======================= | 4001  | ============================ | ======================= | $0.021612 |
+|                         | 4001  |                              |                         | $0.021612 |
