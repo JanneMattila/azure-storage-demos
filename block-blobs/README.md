@@ -1,5 +1,9 @@
 # BlockBlobs
 
+This kind of testing is always tricky. Here are some
+numbers with *very* **very** limited testing.
+Your mileage *will* vary.
+
 ## Upload test
 
 Test parameters:
