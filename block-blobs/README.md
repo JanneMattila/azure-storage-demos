@@ -116,3 +116,5 @@ You can also upload file directly to `Archive` tier:
 | `PutBlock` API call     | 4000  | Write Operations (`Hot`)     | $0.054                  | $0.0216   |
 | `PutBlockList` API call | 1     | Write Operations (`Archive`) | $0.12                   | $0.000012 |
 | TOTAL                   | 4001  |                              |                         | $0.021612 |
+
+![File in Archive tier](https://user-images.githubusercontent.com/2357647/230321675-e7e04c16-1230-4a43-bab7-a27287871d4b.png)
