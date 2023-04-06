@@ -74,7 +74,7 @@ Cost of uploading `1000 GiB` to Azure Storage to `Hot` tier:
 | `PutBlockList` API call | 1     | Write Operations (`Hot`) | $0.054                  | $0.0000054 |
 | TOTAL                   | 4001  |                          |                         | $0.0216054 |
 
-On top of above API based cost there is price of storing `1000 GiB` in `Hot` tier: `$0.0196 per GB` (with pay-as-you-go and first 50 terabyte (TB) / month).
+On top of above API based cost there is price of storing `1000 GiB` in `Hot` tier for `$0.0196 per GB` (with pay-as-you-go and first 50 terabyte (TB) / month).
 
 Here is example pricing extract from one day (with tiny extras due to my tests) after uploading `1000 GiB` file to `Hot` tier:
 
@@ -94,7 +94,7 @@ Here is same in table format:
 | 2023-04-05 | Storage       | Storage     | Read Operations                          | $0.000001 |
 | 2023-04-05 | Storage       | Storage     | Write Operations                         | $0.000000 |
 
-API usage cost from calculation and cost analysis view shows $0.022.
+API usage cost from calculation and cost analysis view shows `$0.022`.
 
 ## Using `Archive` tier
 
@@ -118,3 +118,11 @@ You can also upload file directly to `Archive` tier:
 | TOTAL                   | 4001  |                              |                         | $0.021612 |
 
 ![File in Archive tier](https://user-images.githubusercontent.com/2357647/230321675-e7e04c16-1230-4a43-bab7-a27287871d4b.png)
+
+Cost of storing `1000 GiB` in `Archive` tier is `$0.0018 per GB` (with pay-as-you-go and first 50 terabyte (TB) / month).
+
+Here is example calculation for transferring 500 files with size `1000 GiB` to `Archive`:
+- Migration time API usage cost: `$0.021612 x 500 = $10,806`
+- Permanent storage cost in `Archive`
+  - `1000 GiB = 1073.74 GB` => `500 x 1073.74 GB = 536870 GB = 536.87 TB`
+  - Using [Azure Storage Reserved Capacity with 3-year reservation](https://azure.microsoft.com/en-us/pricing/details/storage/blobs/) => 100 TB / month for `Archive` = $152 => `6 x $152 = $912`
