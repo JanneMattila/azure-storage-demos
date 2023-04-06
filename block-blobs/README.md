@@ -1,10 +1,14 @@
 # BlockBlobs
 
+## Upload test
+
 Test parameters:
-- Azure Storage: 
+
+- Azure Storage:
   - Account kind: StorageV2 (general purpose v2)
   - Performance: Standard (HDD)
   - Replication: Locally-redundant storage (LRS)
+  - Region: West Europe
 - Virtual Machine:
   - SKU: [Standard_D2ds_v4](https://learn.microsoft.com/en-us/azure/virtual-machines/ddv4-ddsv4-series#ddsv4-series)
 - Upload code [Python upload code](https://github.com/JanneMattila/python-examples/tree/main/azure-storage)
@@ -43,3 +47,56 @@ Entire upload duration API calls:
 Uploaded file in container:
 
 ![file in container](https://user-images.githubusercontent.com/2357647/230034841-bbca006a-d25b-4a05-8888-5cadb4b78831.png)
+
+## Cost
+
+### Upload to `Hot` tier
+
+Cost of uploading `1000 GiB` to Azure Storage to `Hot` tier:
+  - Account kind: StorageV2 (general purpose v2)
+  - Performance: Standard (HDD)
+  - Replication: Locally-redundant storage (LRS)
+  - Region: West Europe
+
+| Operation               | Count | Pricing name             | Cost per 10k operations | Cost       |
+| ----------------------- | ----- | ------------------------ | ----------------------- | ---------- |
+| `PutBlock` API call     | 4000  | Write Operations (`Hot`) | $0.054                  | $0.0216    |
+| `PutBlockList` API call | 1     | Write Operations (`Hot`) | $0.054                  | $0.0000054 |
+| ======================= | 4001  | ======================== | ======================= | $0.0216054 |
+
+Here is example pricing extract (with tiny extras due to my tests) after uploading `1000 GiB` file to `Hot` tier:
+
+![Pricing screenshot after uploading 1000 GiB file to Hot tier](https://user-images.githubusercontent.com/2357647/230303100-c88a2684-b9c7-4004-9843-0b99d3b14e08.png)
+
+| UsageDate  | ServiceFamily | ServiceName | Meter                                    | CostUSD   |
+| ---------- | ------------- | ----------- | ---------------------------------------- | --------- |
+| 2023-04-05 | Networking    | Bandwidth   | Standard Data Transfer In                | $-        |
+| 2023-04-05 | Networking    | Bandwidth   | Standard Data Transfer Out               | $0,000000 |
+| 2023-04-05 | Storage       | Storage     | All Other Operations                     | $0,000012 |
+| 2023-04-05 | Storage       | Storage     | Batch Write Operations                   | $0,000004 |
+| 2023-04-05 | Storage       | Storage     | Hot LRS Data Stored                      | $0,190543 |
+| 2023-04-05 | Storage       | Storage     | Hot LRS Write Operations                 | $0,021609 |
+| 2023-04-05 | Storage       | Storage     | LRS List and Create Container Operations | $0,000027 |
+| 2023-04-05 | Storage       | Storage     | Read Operations                          | $0,000001 |
+| 2023-04-05 | Storage       | Storage     | Write Operations                         | $0,000000 |
+
+## Using `Archive` tier
+
+You can [change a blob's access tier](https://learn.microsoft.com/en-us/azure/storage/blobs/access-tiers-overview#changing-a-blobs-access-tier)
+after it has been uploaded, using [Set Blob Tier](https://learn.microsoft.com/en-us/rest/api/storageservices/set-blob-tier)
+API call.
+
+| Operation               | Count | Pricing name                 | Cost per 10k operations | Cost       |
+| ----------------------- | ----- | ---------------------------- | ----------------------- | ---------- |
+| `PutBlock` API call     | 4000  | Write Operations (`Hot`)     | $0.054                  | $0.0216    |
+| `PutBlockList` API call | 1     | Write Operations (`Hot`)     | $0.054                  | $0.0000054 |
+| `SetBlobTier` API call  | 1     | Write Operations (`Archive`) | $0.12                   | $0.000012  |
+| ======================= | 4002  | ========================     | ======================= | $0.0216174 |
+
+You can also upload file directly to `Archive` tier:
+
+| Operation               | Count | Pricing name                 | Cost per 10k operations | Cost      |
+| ----------------------- | ----- | ---------------------------- | ----------------------- | --------- |
+| `PutBlock` API call     | 4000  | Write Operations (`Hot`)     | $0.054                  | $0.0216   |
+| `PutBlockList` API call | 1     | Write Operations (`Archive`) | $0.12                   | $0.000012 |
+| ======================= | 4001  | ============================ | ======================= | $0.021612 |
