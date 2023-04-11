@@ -146,6 +146,28 @@ Note: Since rehydration operation takes time, you can check the progress of the 
 
 See also examples in [examples.ps1](examples.ps1).
 
+Here is example calculation for `1000 GiB` file rehydration from `Archive` to `Hot` tier by copying it to separate storage container:
+
+| Operation                                          | Count | Pricing name                        | Cost per 10k operations | Cost       |
+| -------------------------------------------------- | ----- | ----------------------------------- | ----------------------- | ---------- |
+| `CopyBlob` API call                                | 1     | Read Operations (`Archive`)         | $6                      | $0.0006    |
+| Data Retrieval (per GB)                            | 1000  | Data Retrieval (per GB) (`Archive`) | $0.024 per GB           | $24        |
+|                                                    |       |                                     |                         |            |
+| `GetBlob` API call for rehydration operation check | 10    | Read Operations (`Hot`)             | $0.0043                 | $0.0000043 |
+| TOTAL                                              |       |                                     |                         | ~$25       |
+
+![Rehydrate cost from Archive to Hot tier for 1000 GiB file](https://user-images.githubusercontent.com/2357647/231147077-05e3bd2b-24db-428f-b78a-41fe6a01bc6f.png)
+
+Here is example calculation for downloading above file from `Hot` tier and then deleting it:
+
+Note: This is using predefined `256MiB` sizes to download file contents separately.
+
+| Operation                          | Count | Pricing name            | Cost per 10k operations | Cost     |
+| ---------------------------------- | ----- | ----------------------- | ----------------------- | -------- |
+| `GetBlob` API call for each 256MiB | 4000  | Read Operations (`Hot`) | $0.0043                 | $0.00172 |
+| `DeleteBlob` API call              | 1     | Free                    |                         | $0       |
+| TOTAL                              |       |                         |                         | $0.00172 |
+
 ## AzCopy
 
 You can also use [AzCopy](https://github.com/Azure/azure-storage-azcopy) to transfer files.
