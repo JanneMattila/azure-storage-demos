@@ -62,6 +62,9 @@ Uploaded file in container:
 
 ## Cost
 
+See [Calculate costs](https://learn.microsoft.com/en-us/azure/storage/blobs/archive-cost-estimation#calculate-costs)
+for more examples.
+
 ### Upload to `Hot` tier
 
 Cost of uploading `1000 GiB` to Azure Storage to `Hot` tier:
@@ -121,13 +124,27 @@ You can also upload file directly to `Archive` tier:
 
 ![File in Archive tier](https://user-images.githubusercontent.com/2357647/230321675-e7e04c16-1230-4a43-bab7-a27287871d4b.png)
 
-Cost of storing `1000 GiB` in `Archive` tier is `$0.0018 per GB` (with pay-as-you-go and first 50 terabyte (TB) / month).
+Cost of storing `1000 GiB` in `Archive` tier is `$0.0018 per GB per month` (with pay-as-you-go and first 50 terabyte (TB) / month).
+
+Here is cost per day for above test data:
+
+![Cost when blob is archived](https://user-images.githubusercontent.com/2357647/231078737-d6d1d671-9cd6-4556-9513-c81984a07eb6.png)
 
 Here is example calculation for transferring 500 files with size `1000 GiB` to `Archive`:
 - Migration time API usage cost: `$0.021612 x 500 = $10,806`
 - Permanent storage cost in `Archive`
   - `1000 GiB = 1073.74 GB` => `500 x 1073.74 GB = 536870 GB = 536.87 TB`
   - Using [Azure Storage Reserved Capacity with 3-year reservation](https://azure.microsoft.com/en-us/pricing/details/storage/blobs/) => 100 TB / month for `Archive` = $152 => `6 x $152 = $912`
+
+If you need to do [blob rehydration](https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-overview) from `Archive` 
+to `Hot` and then download that file, then you can 
+[copy an archived blob to an online tier](https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-overview#copy-an-archived-blob-to-an-online-tier).
+
+Read more about [the cost to rehydrate](https://learn.microsoft.com/en-us/azure/storage/blobs/archive-cost-estimation#calculate-costs).
+
+Note: Since rehydration operation takes time, you can check the progress of the [rehydration operation status](https://learn.microsoft.com/en-us/azure/storage/blobs/archive-rehydrate-to-online-tier?tabs=azure-portal#check-the-status-of-a-rehydration-operation).
+
+See also examples in [examples.ps1](examples.ps1).
 
 ## AzCopy
 
@@ -139,7 +156,7 @@ See also [Optimize the performance of AzCopy with Azure Storage](https://learn.m
 You can test performance with this command:
 
 ```bash
-storage_target="https://<storage.blob.core.windows.net/benchmark?si=all&spr=https&sv=2021-12-02&sr=c&sig=<...>"
+storage_target="https://<storage>.blob.core.windows.net/benchmark?si=all&spr=https&sv=2021-12-02&sr=c&sig=<...>"
 
 azcopy benchmark \
   $storage_target \
