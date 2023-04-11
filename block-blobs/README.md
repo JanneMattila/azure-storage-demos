@@ -152,7 +152,6 @@ Here is example calculation for `1000 GiB` file rehydration from `Archive` to `H
 | -------------------------------------------------- | ----- | ----------------------------------- | ----------------------- | ---------- |
 | `CopyBlob` API call                                | 1     | Read Operations (`Archive`)         | $6                      | $0.0006    |
 | Data Retrieval (per GB)                            | 1000  | Data Retrieval (per GB) (`Archive`) | $0.024 per GB           | $24        |
-|                                                    |       |                                     |                         |            |
 | `GetBlob` API call for rehydration operation check | 10    | Read Operations (`Hot`)             | $0.0043                 | $0.0000043 |
 | TOTAL                                              |       |                                     |                         | ~$25       |
 
