@@ -56,7 +56,7 @@ representing blob name.
 .\datagenerator.exe -files=20 -rows=50000 -outdir datas -prefix data
 ```
 
-The above command generates `20 * 50'000 = 1'000'000` files.
+The above command generates `20 * 50'000 = 1'000'000` blob names.
 
 Here are the generated files:
 
@@ -109,7 +109,7 @@ Here's are storage metrics during the upload process:
 
 > [!NOTE]
 > It might take a while after you add tags before
-> they are indexed and can be found by quering with `FindBlobsByTags`.
+> they are indexed and can be found by quering with [Find Blobs by Tags](https://learn.microsoft.com/en-us/rest/api/storageservices/find-blobs-by-tags?tabs=microsoft-entra-id).
 
 [StorageApp](src/StorageApp) can be used to export all names of the
 blobs that have tags associated with them.
@@ -166,7 +166,7 @@ Final throughput: 8541.84 blobs/second
 Extrapolated time for 1 billion blobs: 32.52 hours
 ```
 
-In repeated tests, average batch time has been typically between 0.50 and 0.60.
+In repeated tests, average batch time for _5'000 records_ has been typically between 0.50 and 0.60.
 
 Here are some estimates what it would mean for 1 billion blobs:
 
@@ -179,7 +179,7 @@ Here are some estimates what it would mean for 1 billion blobs:
 The output file size depends _a lot from path lengths_ but can be ~100 MB for 1 million rows.
 To export 1 billion rows, you would most likely need 100 GB disk for the storage.
 
-The output written to files with configured blobs (in the above it was 1 million):
+The output is written to files with configured number of blobs in them (in the above configuration it was set to 1 million):
 
 ```data
 /2020/01/01/00/01/05/log-4effcae8-4412-7e7a-dfc7-df5c2807af85.txt/application/octet-stream
@@ -198,6 +198,9 @@ Here's network usage during the export process:
 ![Find blobs by tags](./images/find-blobs-by-tag.png)
 
 ### 4. Cleanup tags
+
+[blob-set-tags](src/blob/set-tags/blob-set-tags.go)
+reads the above export files and clear tags from each found blob.
 
 ```powershell
 .\blob-set-tags.exe -account="$account" -key="$accountKey" -datadir="datas" -pattern="*.txt" -workers=800
@@ -220,7 +223,7 @@ $ .\blob-set-tags.exe -account="$account" -key="$accountKey" -datadir="datas" -p
 ...<abbreviated>
 ```
 
-To run the cleanup for `1 billion blobs`, it would take:
+To run the cleanup for `1 billion blobs`, it would roughly take:
 
 | Request/sec | Total time |
 | ----------- | ---------- |
@@ -231,8 +234,9 @@ To run the cleanup for `1 billion blobs`, it would take:
 
 > [!NOTE]
 > You **can parallelize this step** since all the blobs have been exported to files.
-> You would just split those files per processor (e.g., running in another virtual machine)
-> to speed up the process.
+> You would just split those exported files per processor (e.g., running in another virtual machine)
+> to speed up the process until you reach some other limit e.g.,
+> [Scalability and performance targets for standard storage accounts](https://learn.microsoft.com/en-us/azure/storage/common/scalability-targets-standard-account).
 
 ## Costs
 
