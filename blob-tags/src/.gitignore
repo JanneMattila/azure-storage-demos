@@ -1,0 +1,14 @@
+datas/
+datas?/
+*.exe
+
+**/.env
+.vs/
+**/bin/
+**/obj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+**/data/
+**/data?/

@@ -39,7 +39,7 @@ az network nsg create \
   --resource-group $resource_group_name \
   --name $nsg_name
 
-my_ip=$(curl --no-progress-meter https://api.ipify.org)
+my_ip=$(curl --no-progress-meter https://myip.jannemattila.com)
 echo $my_ip
 
 az network nsg rule create \
@@ -87,8 +87,8 @@ echo $subnet_pe_id
 vm_json=$(az vm create \
   --resource-group $resource_group_name  \
   --name $vm_name \
-  --image UbuntuLTS \
-  --size Standard_D8ds_v4 \
+  --image "Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest" \
+  --size Standard_D2ds_v4 \
   --admin-username $vm_username \
   --admin-password $vm_password \
   --subnet $subnet_vm_id \
@@ -407,3 +407,4 @@ exit
 
 # Wipe out the resources
 az group delete --name $resource_group_name -y
+  

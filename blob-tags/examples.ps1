@@ -9,8 +9,8 @@ $secureAccessToken = ConvertTo-SecureString -AsPlainText -String $accessToken.To
 
 # Find blobs with tags
 # https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob-tags?tabs=azure-ad#request-headers
-$query = [System.Web.HttpUtility]::UrlEncode("@container='$container' AND `"Malware Scanning scan result`" = 'No threats found'").Replace("+", " ")
-$query = [System.Web.HttpUtility]::UrlEncode("@container='$container' AND `"Malware Scanning scan result`" <> ''").Replace("+", " ")
+$query = [System.Uri]::EscapeDataString("@container='$container' AND `"Example header`" = 'Example value'")
+
 $response = Invoke-WebRequest `
     -Method "GET" `
     -Headers @{ 
@@ -30,9 +30,6 @@ $xml.EnumerationResults.Blobs.Blob | ForEach-Object {
 $xml.EnumerationResults.Blobs.Blob[0]
 $xml.EnumerationResults.Blobs.Blob[0].Tags.TagSet.Tag
 $file = $xml.EnumerationResults.Blobs.Blob[0].Name
-
-# Note: Top level query does not work:
-# "https://$storage.blob.core.windows.net/$container`?comp=blobs&where=$query"
 
 # ---
 
