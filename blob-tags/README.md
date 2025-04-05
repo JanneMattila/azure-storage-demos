@@ -29,6 +29,16 @@ Example calculation:
 
 We want to remove these tags to save costs.
 
+In the below, we'll create simple implementation that enables you to test this in
+isolation and helps to estimate the cleanup process duration and costs.
+
+Here are the steps described in more detail below:
+
+1. Generate test data
+2. Upload test files
+3. Export names of blobs with tags
+4. Cleanup tags
+
 ## Cleanup implementation
 
 The below tests have been executed with `Standard B8ms (8 vcpus, 32 GiB memory)` and
