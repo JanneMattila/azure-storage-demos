@@ -1,4 +1,4 @@
-# Azure Blob Storage Tags
+# Blob Index Tags
 
 > [!WARNING]
 > Perf testing is always tricky. Here are some
