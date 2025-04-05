@@ -29,10 +29,15 @@ Example calculation:
 
 We want to remove these tags to save costs.
 
-In the below, we'll create simple implementation that enables you to test this in
-isolation and helps to estimate the cleanup process duration and costs.
+In the below, we'll create implementation that enables you to test this in isolation.
+This allows us to run this in enough large scale so that we can extrapolate 
+and better estimate the durations and costs.
 
-Here are the steps described in more detail below:
+Here are the high level steps:
+First, we need to generate test data for this scenario.
+Second, we need to find only those blobs that have tags which is in this scenario only 10 %
+of the total blobs. Lastly, we'll clean the tags from blobs found in the previous step.
+Each of these steps is described in detail below:
 
 1. Generate test data
 2. Upload test files
