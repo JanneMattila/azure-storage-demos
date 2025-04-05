@@ -256,13 +256,16 @@ To run the cleanup for `1 billion blobs`, it would roughly take:
 ## Costs
 
 If storing of the blob index tags was in the above example `€7240 per month`,
-then here's the costs of the cleanup process:
+then here's the costs of the cleanup process from storage perspective:
 
 | Operation                     | Count         | Pricing name                                 | Cost per 10k operations | Cost     |
 | ----------------------------- | ------------- | -------------------------------------------- | ----------------------- | -------- |
 | `Find Blobs by Tags` API call | 200'000       | List and Create Container operations (`Hot`) | €0.0464                 | €0.928   |
 | `Set Blob Tags` API call      | 1'000'000'000 | All other Operations (`Hot`)                 | €0.0038                 | €380     |
 | TOTAL                         | 1'000'200'000 |                                              |                         | €380.928 |
+
+Of course, other costs include e.g., virtual machine(s) on top of the storage costs.
+Typically, VMs in this scale category are ~300 euros per month (or less).
 
 ## Notes
 
