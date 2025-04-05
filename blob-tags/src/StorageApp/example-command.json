@@ -1,0 +1,8 @@
+{
+    "operation": "export",
+    "storageName": "<storage name>",
+    "storageKey": "<storage key>",
+    "tagFilter": "\"My field\" = \"My value\"",
+    "folder": "data",
+    "rowsPerFile": 1000000
+}
