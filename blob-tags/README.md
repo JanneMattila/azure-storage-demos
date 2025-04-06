@@ -280,4 +280,5 @@ Typically, VMs in this scale category are ~300 euros per month (or less).
 The above process doesn't have to be _export first everything and then you can proceed to clearing tags_
 since you can at anytime stop the export process, since it creates those data file while it's exporting
 data. Therefore, you can run export process for just for e.g., 10 minutes and then stop it and then 
-cleanup those tags.
+cleanup those tags. Just remember that it might take a bit time to get those blobs removed
+from the index after you have removed the tags.
