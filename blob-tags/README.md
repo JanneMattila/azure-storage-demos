@@ -120,6 +120,14 @@ Here's are storage metrics during the upload process:
 
 ![Storage metrics during the upload](./images/storage-metrics-putblob.png)
 
+Here's network usage during the upload process:
+
+![Create blobs](./images/create-blobs.png)
+
+Here's an example of the storage costs from the upload:
+
+![Storage costs for upload](./images/storage-costs1.png)
+
 ### 3. Export names of blobs with tags
 
 > [!NOTE]
