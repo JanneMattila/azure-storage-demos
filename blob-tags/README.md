@@ -275,6 +275,10 @@ then here's the costs of the cleanup process from storage perspective:
 Of course, other costs include e.g., virtual machine(s) on top of the storage costs.
 Typically, VMs in this scale category are ~300 euros per month (or less).
 
+Here's an example of the storage costs from the cleanup with `1 million blobs`:
+
+![Storage costs for cleanup](./images/storage-costs2.png)
+
 ## Notes
 
 The above process doesn't have to be _export first everything and then you can proceed to clearing tags_
