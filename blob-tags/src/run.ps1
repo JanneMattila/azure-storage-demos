@@ -38,3 +38,14 @@ go build -o ../../blob-create-blobs.exe blob-create-blobs.go
 
 Set-Location ../..
 .\blob-create-blobs.exe -account="$account" -key="$accountKey" -container="$container" -indir=datas
+
+# --------------------------------------
+
+Set-Location StorageApp
+
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:TrimUnusedDependencies=true
+Copy-Item bin\Release\net9.0\win-x64\publish\StorageApp.exe ..
+
+Set-Location ..
+
+.\StorageApp.exe

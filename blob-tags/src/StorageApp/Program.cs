@@ -2,35 +2,14 @@
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Linq;
-using System.Text.Json.Serialization;
 using System.Diagnostics;
+using System.Text.Json;
 
-class Program
+partial class Program
 {
-    class ConfigurationFile
-    {
-        [JsonPropertyName("operation")]
-        public string Operation { get; set; } = "";
-        [JsonPropertyName("storageName")]
-        public string StorageName { get; set; } = "";
-        [JsonPropertyName("storageKey")]
-        public string StorageKey { get; set; } = "";
-        [JsonPropertyName("tagFilter")]
-        public string TagFilter { get; set; } = "";
-        [JsonPropertyName("folder")]
-        public string Folder { get; set; } = "";
-        [JsonPropertyName("rowsPerFile")]
-        public int RowsPerFile { get; set; } = 100000;
-    }
-    
+    static Dictionary<string, string> EmptyTags = new Dictionary<string, string>();
+
     static async Task Main(string[] args)
     {
         if (args.Length < 1)
@@ -97,16 +76,15 @@ class Program
             Console.WriteLine($"Error during execution: {ex.Message}");
         }
     }
-    
+
     static async Task ExportBlobsToFiles(BlobServiceClient client, ConfigurationFile config)
     {
         Console.WriteLine("Starting export operation...");
-        
+
         // Build the tag filter - using the same filter from the original code
         string tagFilter = config.TagFilter ?? "tag1='value1' AND tag2='value2'";
         Console.WriteLine($"Using tag filter: {tagFilter}");
-        
-        int fileCounter = 1;
+
         int blobCounter = 0;
         int batchCounter = 0;
         List<TimeSpan> batchTimes = new List<TimeSpan>();
@@ -115,84 +93,58 @@ class Program
         // Setup producer-consumer queue for file writing
         var fileWriteQueue = new BlockingCollection<FileWriteItem>(new ConcurrentQueue<FileWriteItem>());
         var cancellationTokenSource = new CancellationTokenSource();
-        var fileWriterTask = Task.Run(() => FileWriterWorker(config.Folder, fileWriteQueue, cancellationTokenSource.Token));
-        
+        var fileWriterTask = Task.Run(() => FileWriterWorker(config.Folder, fileWriteQueue, config.RowsPerFile, cancellationTokenSource.Token));
+
         try
         {
             var batchStopwatch = Stopwatch.StartNew();
-            var currentBatch = new List<string>();
-            
+
             await foreach (Page<TaggedBlobItem> page in client.FindBlobsByTagsAsync(tagFilter).AsPages())
             {
                 // Capture timing for this batch
                 batchStopwatch.Stop();
                 batchCounter++;
                 batchTimes.Add(batchStopwatch.Elapsed);
-                
+
                 // Calculate statistics
                 TimeSpan averageBatchTime = TimeSpan.FromTicks((long)batchTimes.Average(t => t.Ticks));
                 TimeSpan totalTime = totalStopwatch.Elapsed;
                 int blobsInCurrentBatch = page.Values.Count();
-                
+                blobCounter += blobsInCurrentBatch;
+
                 // Log batch statistics
                 Console.WriteLine($"Batch #{batchCounter} fetched in {batchStopwatch.Elapsed.TotalSeconds:F2} seconds ({blobsInCurrentBatch} blobs)");
                 Console.WriteLine($"  Average batch time: {averageBatchTime.TotalSeconds:F2} seconds");
                 Console.WriteLine($"  Total time elapsed: {totalTime.TotalMinutes:F2} minutes");
                 Console.WriteLine($"  Estimated throughput: {blobCounter / Math.Max(1, totalTime.TotalSeconds):F2} blobs/second");
-                
+
                 // Reset stopwatch for next batch
                 batchStopwatch.Restart();
-                
-                foreach (TaggedBlobItem blobItem in page.Values)
+
+                if (page.Values.Count > 0)
                 {
-                    currentBatch.Add("/" + blobItem.BlobName);
-                    blobCounter++;
-                    
-                    // When we hit the limit, add to queue and reset
-                    if (currentBatch.Count >= config.RowsPerFile)
+                    fileWriteQueue.Add(new FileWriteItem
                     {
-                        // Queue the batch for writing
-                        fileWriteQueue.Add(new FileWriteItem 
-                        { 
-                            FileNumber = fileCounter,
-                            BlobNames = new List<string>(currentBatch)
-                        });
-                        
-                        Console.WriteLine($"Queued {currentBatch.Count} blobs for file {fileCounter}");
-                        
-                        currentBatch.Clear();
-                        fileCounter++;
-                    }
+                        Blobs = page.Values
+                    });
                 }
             }
-            
-            // Queue any remaining blob names
-            if (currentBatch.Count > 0)
-            {
-                fileWriteQueue.Add(new FileWriteItem 
-                { 
-                    FileNumber = fileCounter,
-                    BlobNames = new List<string>(currentBatch)
-                });
-                
-                Console.WriteLine($"Queued {currentBatch.Count} blobs for file {fileCounter}");
-            }
-            
+
             // Signal no more items will be added
             fileWriteQueue.CompleteAdding();
-            
+
             // Wait for all writes to complete
             Console.WriteLine("Waiting for file writer to complete...");
             await fileWriterTask;
-            
+
             totalStopwatch.Stop();
             TimeSpan totalRunTime = totalStopwatch.Elapsed;
-            
-            Console.WriteLine($"Export completed. Total blobs: {blobCounter}, Total files: {fileCounter}");
+
+            Console.WriteLine($"Export completed. Total blobs: {blobCounter}");
             Console.WriteLine($"Total batches: {batchCounter}, Average batch time: {TimeSpan.FromTicks((long)batchTimes.Average(t => t.Ticks)).TotalSeconds:F2} seconds");
             Console.WriteLine($"Total run time: {totalRunTime.TotalMinutes:F2} minutes");
             Console.WriteLine($"Final throughput: {blobCounter / totalRunTime.TotalSeconds:F2} blobs/second");
-            
+
             // Extrapolation for billions
             if (batchCounter > 0 && blobCounter > 0)
             {
@@ -216,42 +168,43 @@ class Program
             }
         }
     }
-    
-    // Class to represent items in the file write queue
-    class FileWriteItem
+
+    static async Task FileWriterWorker(string folderPath, BlockingCollection<FileWriteItem> queue, int rowsPerFile, CancellationToken cancellationToken)
     {
-        public int FileNumber { get; set; }
-        public List<string> BlobNames { get; set; } = new List<string>();
-    }
-    
-    // Background worker that processes the file write queue
-    static async Task FileWriterWorker(string folderPath, BlockingCollection<FileWriteItem> queue, CancellationToken cancellationToken)
-    {
-        int filesWritten = 0;
+        int currentFileNumber = 1;
         int totalBlobsWritten = 0;
+        int rowsInCurrentFile = 0;
         var fileWriteStopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             // Process queue items until the queue is marked as complete and empty
             while (!queue.IsCompleted)
             {
-                FileWriteItem item;
+                FileWriteItem? item;
                 try
                 {
                     // Try to take an item from the queue with a timeout
                     if (queue.TryTake(out item, 100, cancellationToken))
                     {
-                        // We got an item, process it
-                        var itemStopwatch = Stopwatch.StartNew();
-                        string filePath = Path.Combine(folderPath, $"data-{item.FileNumber}.txt");
-                        await File.WriteAllLinesAsync(filePath, item.BlobNames, cancellationToken);
-                        
-                        filesWritten++;
-                        totalBlobsWritten += item.BlobNames.Count;
-                        
-                        Console.WriteLine($"File writer: Wrote file {item.FileNumber} with {item.BlobNames.Count} blobs in {itemStopwatch.ElapsedMilliseconds} ms");
-                        Console.WriteLine($"  Total files written: {filesWritten}, Total blobs written: {totalBlobsWritten}");
+                        string filePath = Path.Combine(folderPath, $"data-{currentFileNumber}.txt");
+
+                        var blobNamesInBatch = new List<string>();
+                        foreach (TaggedBlobItem blobItem in item.Blobs)
+                        {
+                            blobNamesInBatch.Add("/" + blobItem.BlobName);
+                        }
+
+                        await File.AppendAllLinesAsync(filePath, blobNamesInBatch, cancellationToken);
+                        rowsInCurrentFile += blobNamesInBatch.Count;
+                        totalBlobsWritten += blobNamesInBatch.Count;
+
+                        if (rowsInCurrentFile >= rowsPerFile)
+                        {
+                            // File is full, prepare for next file
+                            currentFileNumber++;
+                            rowsInCurrentFile = 0;
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -261,16 +214,16 @@ class Program
                     break;
                 }
             }
-            
+
             fileWriteStopwatch.Stop();
-            Console.WriteLine($"File writer completed: {filesWritten} files written with {totalBlobsWritten} blobs in {fileWriteStopwatch.Elapsed.TotalSeconds:F2} seconds");
+            Console.WriteLine($"File writer completed: {currentFileNumber} files written with {totalBlobsWritten} blobs in {fileWriteStopwatch.Elapsed.TotalSeconds:F2} seconds");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"File writer error: {ex.Message}");
         }
     }
-    
+
     static async Task SetBlobTags(BlobServiceClient client, ConfigurationFile config)
     {
         Console.WriteLine("Starting set operation...");
@@ -293,14 +246,14 @@ class Program
         Console.WriteLine($"Using {processorCount} processors, {filesPerProcessor} files per processor.");
         
         // Group files for each processor
-        List<List<string>> fileGroups = new List<List<string>>();
+        List<List<string>> fileGroups = [];
         for (int i = 0; i < files.Length; i += filesPerProcessor)
         {
             fileGroups.Add(files.Skip(i).Take(filesPerProcessor).ToList());
         }
         
         // Create tasks for each processor
-        List<Task> tasks = new List<Task>();
+        List<Task> tasks = [];
         foreach (var fileGroup in fileGroups)
         {
             tasks.Add(ProcessFilesAsync(client, fileGroup));
@@ -336,7 +289,7 @@ class Program
         }
         
         // Process each blob in parallel
-        List<Task> blobTasks = new List<Task>();
+        List<Task> blobTasks = [];
         
         foreach (string blobName in blobNames)
         {
@@ -378,14 +331,7 @@ class Program
             var containerClient = client.GetBlobContainerClient(containerName);
             var blobClient = containerClient.GetBlobClient(blobPath);
             
-            // Set a sample tag - you can customize this based on your needs
-            var tags = new Dictionary<string, string>
-            {
-                { "Processed", "True" },
-                { "ProcessedDate", DateTime.UtcNow.ToString("o") }
-            };
-            
-            await blobClient.SetTagsAsync(tags);
+            await blobClient.SetTagsAsync(EmptyTags);
         }
         catch (Exception ex)
         {
