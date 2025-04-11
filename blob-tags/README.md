@@ -259,6 +259,18 @@ Here's network usage from the above processing:
 
 ![Set tags](./images/set-tags.png)
 
+You can use workers parameter to control the parallelism e.g., `-workers=200`:
+
+```
+2025/04/11 08:30:01 Starting 200 workers to process 999933 URLs (approx. 4999 per worker)
+2025/04/11 08:30:06 Progress: 172952 completed, 0 errors, 34570.56 req/sec (current: 34570.56 req/sec)
+2025/04/11 08:30:11 Progress: 371630 completed, 0 errors, 37154.87 req/sec (current: 39741.02 req/sec)
+2025/04/11 08:30:16 Progress: 572871 completed, 0 errors, 38185.31 req/sec (current: 40246.57 req/sec)
+2025/04/11 08:30:21 Progress: 771012 completed, 0 errors, 38545.86 req/sec (current: 39627.66 req/sec)
+2025/04/11 08:30:26 Progress: 953971 completed, 0 errors, 38154.92 req/sec (current: 36590.99 req/sec)
+2025/04/11 08:30:31 Progress: 999919 completed, 0 errors, 33327.72 req/sec (current: 9189.51 req/sec)
+```
+
 To run the cleanup for `1 billion blobs`, it would roughly take:
 
 | Request/sec | Total time |
