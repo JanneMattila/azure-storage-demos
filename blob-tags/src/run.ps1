@@ -41,6 +41,14 @@ Set-Location ../..
 
 # --------------------------------------
 
+Set-Location blob/find-blobs-with-tags/
+go build -o ../../blob-find-blobs-with-tags.exe find-blobs-with-tags.go
+
+Set-Location ../..
+.\blob-find-blobs-with-tags.exe -account="$account" -key="$accountKey" -container="$container" -outdir=data -tagfilter="$tagQuery"
+
+# --------------------------------------
+
 Set-Location StorageApp
 
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:TrimUnusedDependencies=true
