@@ -246,6 +246,19 @@ $ .\blob-set-tags.exe -account="$account" -key="$accountKey" -datadir="datas" -p
 ...<abbreviated>
 ```
 
+If you have virtual machine in the same availability zone as the storage account, then you _might get the following performance_
+even with _Standard B4ms (4 vcpus, 16 GiB memory)_ SKU (going above `40k req/sec` starts to produce errors):
+
+```
+2025/04/11 07:55:54 Progress: 182802 completed, 0 errors, 36541.18 req/sec (current: 36541.18 req/sec)
+2025/04/11 07:55:59 Progress: 422442 completed, 0 errors, 42230.17 req/sec (current: 47921.37 req/sec)
+2025/04/11 07:56:04 Progress: 681353 completed, 5431 errors, 45415.50 req/sec (current: 51789.12 req/sec)
+```
+
+Here's network usage from the above processing:
+
+![Set tags](./images/set-tags.png)
+
 To run the cleanup for `1 billion blobs`, it would roughly take:
 
 | Request/sec | Total time |

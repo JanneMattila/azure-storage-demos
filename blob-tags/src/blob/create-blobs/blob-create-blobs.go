@@ -264,19 +264,13 @@ func uploadBlob(client *azblob.Client, containerName string, blobName string, co
 	ctx := context.Background()
 
 	// Clean up the blob name - remove any leading slash
-	if strings.HasPrefix(blobName, "/") {
-		blobName = blobName[1:]
-	}
-
-	// Format: just containerName/blobName
-	// The SDK will construct the full URL with the account name internally
-	blobURL := containerName + "/" + blobName
+	blobName = strings.TrimPrefix(blobName, "/")
 
 	// Upload the content directly
 	_, err := client.UploadBuffer(
 		ctx,
-		blobURL,
-		"application/octet-stream", // content type
+		containerName,
+		blobName,
 		content,
 		&azblob.UploadBufferOptions{},
 	)
