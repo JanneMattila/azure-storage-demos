@@ -64,54 +64,84 @@ echo "Search path: $SEARCH_PATH"
 echo "Split size: $SPLIT_SIZE files per output file"
 echo "Output prefix: $OUTPUT_PREFIX"
 
-# Build find command
-FIND_CMD="find \"$SEARCH_PATH\" -type f"
-
-# Add date filter if specified
+# Build find command with date filter if specified
 if [ -n "$DATE_FILTER" ]; then
   # Validate date format
   if ! date -d "$DATE_FILTER" >/dev/null 2>&1; then
     echo "Error: Invalid date format. Use YYYY-MM-DD"
     exit 1
   fi
-  echo "Date filter: Files newer than $DATE_FILTER"
-  FIND_CMD="$FIND_CMD -newermt \"$DATE_FILTER\""
+  echo ""
+  echo "Step 1: Applying date filter (files newer than $DATE_FILTER)..."
+  FIND_CMD="find \"$SEARCH_PATH\" -type f -newermt \"$DATE_FILTER\""
 else
-  echo "Date filter: None"
+  echo ""
+  echo "Step 1: No date filter applied"
+  FIND_CMD="find \"$SEARCH_PATH\" -type f"
 fi
 
-# Create a temporary file for all results
-TEMP_FILE=$(mktemp)
-trap "rm -f $TEMP_FILE" EXIT
+echo ""
+echo "Step 2: Processing files in batches of $SPLIT_SIZE..."
+echo "Progress will be shown for each batch created"
+echo ""
 
-echo "Searching for files..."
-eval "$FIND_CMD" > "$TEMP_FILE"
+# Process files in batches and write directly to output files
+file_counter=0
+batch_number=1
+current_batch_file="${OUTPUT_PREFIX}-${batch_number}.txt"
 
-# Count total files found
-TOTAL_FILES=$(wc -l < "$TEMP_FILE")
-echo "Found $TOTAL_FILES files"
+# Remove any existing output files
+rm -f "${OUTPUT_PREFIX}"-*.txt
 
-if [ "$TOTAL_FILES" -eq 0 ]; then
+# Process files with progress indicator
+eval "$FIND_CMD" 2>/dev/null | while IFS= read -r filepath; do
+  echo "$filepath" >> "$current_batch_file"
+  file_counter=$((file_counter + 1))
+  
+  # Show progress every 10000 files
+  if [ $((file_counter % 10000)) -eq 0 ]; then
+    echo "  Processed $file_counter files... (currently writing to ${OUTPUT_PREFIX}-${batch_number}.txt)"
+  fi
+  
+  # Check if we need to start a new batch
+  if [ $((file_counter % SPLIT_SIZE)) -eq 0 ]; then
+    files_in_batch=$(wc -l < "$current_batch_file")
+    echo "✓ Created ${OUTPUT_PREFIX}-${batch_number}.txt with $files_in_batch files"
+    batch_number=$((batch_number + 1))
+    current_batch_file="${OUTPUT_PREFIX}-${batch_number}.txt"
+  fi
+done
+
+# Handle the last batch if it has files
+if [ -f "$current_batch_file" ] && [ -s "$current_batch_file" ]; then
+  files_in_batch=$(wc -l < "$current_batch_file")
+  echo "✓ Created ${OUTPUT_PREFIX}-${batch_number}.txt with $files_in_batch files"
+fi
+
+# Count how many output files were created
+OUTPUT_FILES_CREATED=$(ls -1 "${OUTPUT_PREFIX}"-*.txt 2>/dev/null | wc -l)
+
+if [ "$OUTPUT_FILES_CREATED" -eq 0 ]; then
+  echo ""
   echo "No files found matching the criteria"
   exit 0
 fi
 
-# Calculate number of output files needed
-NUM_OUTPUT_FILES=$(( (TOTAL_FILES + SPLIT_SIZE - 1) / SPLIT_SIZE ))
-echo "Creating $NUM_OUTPUT_FILES output file(s)..."
-
-# Split the results into multiple files
-split -l "$SPLIT_SIZE" -d -a ${#NUM_OUTPUT_FILES} "$TEMP_FILE" "${OUTPUT_PREFIX}-"
-
-# Rename files to have .txt extension and proper numbering
-counter=1
-for file in ${OUTPUT_PREFIX}-*; do
+# Count total files processed
+TOTAL_FILES_PROCESSED=0
+for file in "${OUTPUT_PREFIX}"-*.txt; do
   if [ -f "$file" ]; then
-    mv "$file" "${OUTPUT_PREFIX}-${counter}.txt"
-    file_count=$(wc -l < "${OUTPUT_PREFIX}-${counter}.txt")
-    echo "Created ${OUTPUT_PREFIX}-${counter}.txt with $file_count files"
-    counter=$((counter + 1))
+    TOTAL_FILES_PROCESSED=$((TOTAL_FILES_PROCESSED + $(wc -l < "$file")))
   fi
 done
 
-echo "Done! Created $NUM_OUTPUT_FILES output file(s)"
+echo ""
+echo "======================================"
+echo "Done! Summary:"
+echo "  Total files in search path: $TOTAL_FILES_UNFILTERED"
+if [ -n "$DATE_FILTER" ]; then
+  echo "  Files matching date filter: $TOTAL_FILES_PROCESSED"
+fi
+echo "  Output files created: $OUTPUT_FILES_CREATED"
+echo "  Files per output file: $SPLIT_SIZE (max)"
+echo "======================================"
