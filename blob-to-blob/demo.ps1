@@ -89,5 +89,30 @@ azcopy copy `
     --overwrite ifSourceNewer `
     --recursive
 
+
+## Using Rest API
+$storage1 = "<your storage account name>"
+$storage2 = "<your storage account name>"
+$container = "container1"
+$path = "directory"
+$filename = "file.txt"
+
+$accessToken1 = Get-AzAccessToken -ResourceUrl "https://$storage1.blob.core.windows.net/"
+$accessToken2 = Get-AzAccessToken -ResourceUrl "https://$storage2.blob.core.windows.net/"
+
+## Put Blob From URL
+# https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url?tabs=microsoft-entra-id
+Invoke-RestMethod `
+    -Method "PUT" `
+    -Headers @{ 
+    "x-ms-version"     = "2025-11-05"
+    "x-ms-blob-type"   = "BlockBlob"
+    "x-ms-copy-source" = "https://$storage1.blob.core.windows.net/$container/$path/$filename"
+    "x-ms-copy-source-authorization" = "Bearer $($accessToken1.Token | ConvertFrom-SecureString -AsPlainText)"
+} `
+    -Authentication Bearer `
+    -Token $accessToken2.Token `
+    -Uri "https://$storage2.blob.core.windows.net/$container/$path/$filename"
+
 # Clean up
 Remove-AzResourceGroup -Name $resourceGroupName -Force
